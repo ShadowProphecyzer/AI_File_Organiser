@@ -1,0 +1,268 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #c3ecf5, #e3f2fd);
+  min-height: 100vh;
+}
+
+/* Navigation Bar */
+.navbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  padding: 15px 40px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.nav-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #42a5f5;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-links li a:hover {
+  color: #1e88e5;
+}
+
+/* Main Container */
+.container {
+  text-align: center;
+  padding: 60px 40px;
+  max-width: 600px;
+  margin: 40px auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  animation: floatUp 1s ease-out;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+#drop-area {
+  border: 3px dashed #90caf9;
+  border-radius: 15px;
+  padding: 30px;
+  background: #f0f8ff;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#drop-area:hover {
+  background: #e1f5fe;
+}
+
+button {
+  padding: 12px 25px;
+  font-size: 1rem;
+  color: white;
+  background: #42a5f5;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #1e88e5;
+}
+
+#file-list {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  color: #444;
+}
+
+/* Animations */
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 1s ease forwards;
+}
+
+.fade-in.delay {
+  animation-delay: 0.3s;
+}
+
+.fade-in.delay-2 {
+  animation-delay: 0.6s;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+.nav-auth {
+  display: flex;
+  gap: 15px;
+}
+
+.auth-btn {
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #1e88e5;
+  border: 2px solid #1e88e5;
+  transition: all 0.2s ease-in-out;
+}
+
+.auth-btn:hover {
+  background-color: #1e88e5;
+  color: white;
+}
+
+.auth-btn.signup {
+  background-color: #1e88e5;
+  color: white;
+}
+
+.auth-btn.signup:hover {
+  background-color: #1565c0;
+  border-color: #1565c0;
+}
+.auth-container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 30px 40px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #222;
+  font-weight: 700;
+  font-size: 2.1rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-form input {
+  padding: 14px 18px;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  border: 1.8px solid #ccc;
+  outline-offset: 2px;
+  transition: border-color 0.3s ease;
+  font-weight: 500;
+}
+
+.auth-form input:focus {
+  border-color: #1e88e5;
+  box-shadow: 0 0 8px rgba(30, 136, 229, 0.5);
+}
+
+.auth-form button {
+  padding: 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: #1e88e5;
+  color: white;
+  box-shadow: 0 5px 15px rgba(30, 136, 229, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-form button:hover {
+  background-color: #1565c0;
+  box-shadow: 0 8px 20px rgba(21, 101, 192, 0.6);
+}
+
+.form-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 35px;
+}
+
+.form-toggle button {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background-color: #e3f2fd;
+  color: #1e88e5;
+  margin: 0 10px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: 0 4px 10px rgba(30,136,229,0.15);
+}
+
+.form-toggle button.active {
+  background-color: #1e88e5;
+  color: white;
+  box-shadow: 0 6px 18px rgba(30,136,229,0.5);
+}
+
+.auth-form {
+  display: none;       /* hide all forms by default */
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-form.active {
+  display: flex;       /* show only the active form */
+}
+
+.auth-form button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  /* keep your existing styles */
+  padding: 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: #1e88e5;
+  color: white;
+  box-shadow: 0 5px 15px rgba(30, 136, 229, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#authMessage {
+  margin-top: 20px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  min-height: 24px;
+  text-align: center;
+}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Center</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar fade-in">
+    <div class="nav-logo">UploadHub</div>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Upload</a></li>
+      <li><a href="#">My Files</a></li>
+      <li><a href="#">Help</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="signin-signup.html?form=signin" class="auth-btn">Login</a>
+      <a href="signin-signup.html?form=signup" class="auth-btn signup">Sign Up</a>
+    </div>
+  </nav>
+
+  <!-- Main Upload Area -->
+  <div class="container">
+    <h1 class="fade-in">Upload Your File</h1>
+    <div id="drop-area" class="fade-in delay">
+      <p>Drag & Drop your file here</p>
+      <p>or</p>
+      <button id="fileBtn">Select File</button>
+      <input type="file" id="fileInput" hidden />
+    </div>
+    <div id="file-list" class="fade-in delay-2"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

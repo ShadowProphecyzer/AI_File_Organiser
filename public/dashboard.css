@@ -1,0 +1,116 @@
+/* Reset & Base */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f8fb;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out both;
+}
+
+@keyframes statusFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #004aad;
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logout-btn {
+  background-color: white;
+  color: #004aad;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.logout-btn:hover {
+  transform: scale(1.05);
+  background-color: #e0e0e0;
+}
+
+/* Main Content */
+.dashboard-content {
+  max-width: 600px;
+  margin: 3rem auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section {
+  text-align: center;
+}
+
+.upload-section h2 {
+  margin-bottom: 1rem;
+}
+
+.file-input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+  transition: box-shadow 0.3s ease;
+}
+
+.file-input:focus {
+  box-shadow: 0 0 8px rgba(0, 74, 173, 0.5);
+  outline: none;
+}
+
+.upload-btn {
+  background-color: #004aad;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.upload-btn:hover {
+  background-color: #003080;
+  transform: scale(1.05);
+}
+
+.status-msg {
+  margin-top: 1rem;
+  font-weight: bold;
+  opacity: 0;
+  animation: statusFade 0.5s ease forwards;
+}

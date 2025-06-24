@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <nav class="navbar fade-in">
+    <h1 class="logo">MUN Dashboard</h1>
+    <div class="user-controls">
+      <span id="userGreeting" class="greeting"></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="dashboard-content fade-in">
+    <section class="upload-section">
+      <h2>Upload Files</h2>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" required class="file-input" />
+        <button type="submit" class="upload-btn">Upload</button>
+      </form>
+      <p id="uploadStatus" class="status-msg"></p>
+    </section>
+  </main>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
