@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Upload Center</title>
+  <title>MUN Platform</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar fade-in">
-    <div class="nav-logo">UploadHub</div>
+    <a href="index.html"><div class="nav-logo">AI Sorter</div></a>
     <ul class="nav-links">
-      <li><a href="#">Home</a></li>
-      <li><a href="#">Upload</a></li>
-      <li><a href="#">My Files</a></li>
-      <li><a href="#">Help</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="contact_us.html">Contact</a></li>
     </ul>
     <div class="nav-auth">
       <a href="signin-signup.html?form=signin" class="auth-btn">Login</a>
@@ -22,17 +21,28 @@
     </div>
   </nav>
 
-  <!-- Main Upload Area -->
-  <div class="container">
-    <h1 class="fade-in">Upload Your File</h1>
-    <div id="drop-area" class="fade-in delay">
-      <p>Drag & Drop your file here</p>
-      <p>or</p>
-      <button id="fileBtn">Select File</button>
-      <input type="file" id="fileInput" hidden />
+  <!-- Hero Section -->
+  <header class="homepage-hero fade-in delay">
+    <div class="hero-content">
+      <h1>Welcome to AI Sorter</h1>
+      <p>Your smart solution for managing MUN documents, tasks, and collaboration — all in one place.</p>
+      <div class="hero-buttons">
+        <a href="signin-signup.html?form=signup" class="hero-btn">Get Started</a>
+        <a href="features.html" class="hero-btn outline">Learn More</a>
+      </div>
     </div>
-    <div id="file-list" class="fade-in delay-2"></div>
-  </div>
+  </header>
+
+  <!-- Optional Features Section -->
+  <section id="features" class="features-section fade-in delay-2">
+    <h2>Why Choose Us?</h2>
+    <div class="features-grid">
+      <div class="feature-card">Free storage uptp 1gb</div>
+      <div class="feature-card">Live Descritpions</div>
+      <div class="feature-card">Real-Time sorting</div>
+      <div class="feature-card">Best Search Bar</div>
+    </div>
+  </section>
 
   <script src="script.js"></script>
 </body>

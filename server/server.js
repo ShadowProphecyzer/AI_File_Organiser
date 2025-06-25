@@ -1,9 +1,11 @@
+const Contact = require('./models/contact');
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const User = require('./models/user');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -47,14 +49,23 @@ app.post('/signup', async (req, res) => {
   if (!name || !email || !password)
     return res.status(400).json({ message: 'Please fill all fields' });
 
-  const exists = await User.findOne({ email });
-  if (exists)
-    return res.status(400).json({ message: 'User already exists' });
+  const userExists = await User.findOne({ $or: [{ email }, { name }] });
+  if (userExists)
+    return res.status(400).json({ message: 'Username or Email already taken' });
 
   const hashed = await bcrypt.hash(password, 10);
   const newUser = new User({ name, email, password: hashed });
   await newUser.save();
-  res.status(200).json({ message: 'Signup successful. Please log in.' });
+
+  // Create user folder
+  const userFolderPath = path.join(__dirname, '..', 'users', name);
+  if (!fs.existsSync(userFolderPath)) {
+    fs.mkdirSync(userFolderPath, { recursive: true });
+    console.log(`📁 Created folder for user: ${name}`);
+  }
+
+  req.session.userId = newUser._id;
+  res.status(200).json({ username: newUser.name }); // ✅ Send username
 });
 
 app.post('/signin', async (req, res) => {
@@ -68,7 +79,22 @@ app.post('/signin', async (req, res) => {
     return res.status(401).json({ message: 'Incorrect password' });
 
   req.session.userId = user._id;
-  res.status(200).json({ message: 'Login successful', redirect: '/dashboard' });
+  res.status(200).json({ username: user.name }); // ✅ Send username
+});
+
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    await Contact.create({ name, email, message });
+    res.status(200).json({ message: 'Your message has been sent!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error. Please try again.' });
+  }
 });
 
 app.get('/logout', (req, res) => {

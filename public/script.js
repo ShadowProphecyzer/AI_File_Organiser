@@ -1,17 +1,48 @@
-function toggleForm(type) {
-  document.getElementById("loginForm").classList.toggle("hidden", type !== "login");
-  document.getElementById("registerForm").classList.toggle("hidden", type !== "register");
+// Get buttons and forms
+const btnSignIn = document.getElementById("btnSignIn");
+const btnSignUp = document.getElementById("btnSignUp");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const authMessage = document.getElementById("authMessage");
 
-  const authMessage = document.getElementById("authMessage");
-  if (authMessage) authMessage.innerText = ""; // Clear messages when switching
+// Show either login or register form by toggling 'active' class
+function showForm(type) {
+  if (type === "signin") {
+    loginForm.classList.add("active");
+    registerForm.classList.remove("active");
+    btnSignIn.classList.add("active");
+    btnSignUp.classList.remove("active");
+    authMessage.innerText = "";
+    authMessage.style.color = "";
+  } else {
+    loginForm.classList.remove("active");
+    registerForm.classList.add("active");
+    btnSignIn.classList.remove("active");
+    btnSignUp.classList.add("active");
+    authMessage.innerText = "";
+    authMessage.style.color = "";
+  }
 }
 
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
+// On page load: check URL param to decide which form to show (default signin)
+const params = new URLSearchParams(window.location.search);
+const formParam = params.get("form");
+if (formParam === "signup") {
+  showForm("signup");
+} else {
+  showForm("signin");
+}
+
+// Add event listeners for toggle buttons
+btnSignIn.addEventListener("click", () => showForm("signin"));
+btnSignUp.addEventListener("click", () => showForm("signup"));
+
+// LOGIN FORM SUBMIT HANDLER
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const form = e.target;
-  const email = form.email.value.trim();
-  const password = form.password.value.trim();
-  const authMessage = document.getElementById("authMessage");
+
+  const email = loginForm.email.value.trim();
+  const password = loginForm.password.value.trim();
 
   if (!email || !password) {
     authMessage.style.color = "red";
@@ -19,54 +50,78 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     return;
   }
 
-  const res = await fetch("/signin", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const response = await fetch("/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (res.ok) {
-    const user = await res.json();
-    authMessage.style.color = "green";
-    authMessage.innerText = `Welcome back, ${user.username || user.name || "User"}! Redirecting...`;
-    localStorage.setItem("username", user.username || user.name);
-    setTimeout(() => {
-      window.location.href = "/index.html";
-    }, 1500);
-  } else {
-    const errorMsg = await res.text();
+    if (response.ok) {
+      const data = await response.json();
+      const username = data.username || "User";
+      localStorage.setItem("username", username);
+      authMessage.style.color = "green";
+      authMessage.innerText = `Welcome back, ${username}! Redirecting...`;
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1500);
+    } else {
+      // Try to get error message JSON, fallback to plain text or generic
+      let errorMsg = "Login failed. Please try again.";
+      try {
+        const errData = await response.json();
+        if (errData.message) errorMsg = errData.message;
+      } catch {
+        // ignore JSON parse error
+      }
+      authMessage.style.color = "red";
+      authMessage.innerText = errorMsg;
+    }
+  } catch (err) {
     authMessage.style.color = "red";
-    authMessage.innerText = `Error: ${errorMsg || 'Something went wrong. Please try again.'}`;
+    authMessage.innerText = "Network error. Please try again.";
   }
 });
 
-document.getElementById("registerForm").addEventListener("submit", async (e) => {
+// REGISTER FORM SUBMIT HANDLER
+registerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const form = e.target;
-  const name = form.username.value.trim();
-  const email = form.email.value.trim();
-  const password = form.password.value.trim();
-  const authMessage = document.getElementById("authMessage");
 
-  if (!name || !email || !password) {
+  const username = registerForm.username.value.trim();
+  const email = registerForm.email.value.trim();
+  const password = registerForm.password.value.trim();
+
+  if (!username || !email || !password) {
     authMessage.style.color = "red";
     authMessage.innerText = "Please fill in all registration fields.";
     return;
   }
 
-  const res = await fetch("/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }), // ✅ Backend expects 'name'
-  });
+  try {
+    const response = await fetch("/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: username, email, password }),
+    });
 
-  if (res.ok) {
-    authMessage.style.color = "green";
-    authMessage.innerText = "Registration successful! You can now log in.";
-    toggleForm("login"); // Optional: switch to login after success
-  } else {
-    const errorMsg = await res.text();
+    if (response.ok) {
+      authMessage.style.color = "green";
+      authMessage.innerText = "Registration successful! You can now log in.";
+      showForm("signin");
+    } else {
+      let errorMsg = "Registration failed. Please try again.";
+      try {
+        const errData = await response.json();
+        if (errData.message) errorMsg = errData.message;
+      } catch {
+        // ignore JSON parse error
+      }
+      authMessage.style.color = "red";
+      authMessage.innerText = errorMsg;
+    }
+  } catch (err) {
     authMessage.style.color = "red";
-    authMessage.innerText = `Error: ${errorMsg}`;
+    authMessage.innerText = "Network error. Please try again.";
   }
 });

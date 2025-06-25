@@ -266,3 +266,89 @@ button:hover {
   min-height: 24px;
   text-align: center;
 }
+
+/* === Hero Section === */
+.homepage-hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 4rem 2rem;
+  background: linear-gradient(to right, #e3f2fd, #ffffff);
+  text-align: center;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #0d47a1;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  color: #333;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.hero-btn {
+  background-color: #42a5f5;
+  color: white;
+  padding: 0.8rem 1.8rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.hero-btn:hover {
+  background-color: #1e88e5;
+}
+
+.hero-btn.outline {
+  background: transparent;
+  border: 2px solid #42a5f5;
+  color: #42a5f5;
+}
+
+.hero-btn.outline:hover {
+  background-color: #42a5f5;
+  color: white;
+}
+
+/* === Features Section === */
+.features-section {
+  padding: 4rem 2rem;
+  background-color: #f5faff;
+  text-align: center;
+}
+
+.features-section h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #0d47a1;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-card {
+  background-color: #e3f2fd;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  font-weight: 500;
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}

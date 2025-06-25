@@ -4,28 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Navigation Bar -->
   <nav class="navbar fade-in">
-    <h1 class="logo">MUN Dashboard</h1>
-    <div class="user-controls">
-      <span id="userGreeting" class="greeting"></span>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+    <a href="index.html"><div class="nav-logo">AI Sorter</div></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Upload</a></li>
+      <li><a id="redirectLink" href="#">My Files</a></li>
+      <li><a href="contact_us.html">Contact</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="index.html" class="auth-btn">Logout</a>
     </div>
   </nav>
 
-  <main class="dashboard-content fade-in">
-    <section class="upload-section">
-      <h2>Upload Files</h2>
-      <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="file" required class="file-input" />
-        <button type="submit" class="upload-btn">Upload</button>
-      </form>
-      <p id="uploadStatus" class="status-msg"></p>
-    </section>
-  </main>
+  <!-- Main Upload Area -->
+  <div class="container">
+    <h1 class="fade-in">Upload Your File</h1>
+    <div id="drop-area" class="fade-in delay">
+      <p>Drag & Drop your file here</p>
+      <p>or</p>
+      <button id="fileBtn">Select File</button>
+      <input type="file" id="fileInput" hidden />
+    </div>
+    <div id="file-list" class="fade-in delay-2"></div>
+  </div>
 
+  <script src="script.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
