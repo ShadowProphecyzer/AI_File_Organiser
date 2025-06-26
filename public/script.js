@@ -24,6 +24,12 @@ function showForm(type) {
   }
 }
 
+// Password validation (same as backend)
+function isValidPassword(password) {
+  const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+  return pattern.test(password);
+}
+
 // On page load: check URL param to decide which form to show (default signin)
 const params = new URLSearchParams(window.location.search);
 const formParam = params.get("form");
@@ -60,21 +66,18 @@ loginForm.addEventListener("submit", async (e) => {
     if (response.ok) {
       const data = await response.json();
       const username = data.username || "User";
-      localStorage.setItem("username", username);
+      localStorage.setItem("username", username); // Store for later use
       authMessage.style.color = "green";
       authMessage.innerText = `Welcome back, ${username}! Redirecting...`;
       setTimeout(() => {
         window.location.href = "dashboard.html";
       }, 1500);
     } else {
-      // Try to get error message JSON, fallback to plain text or generic
       let errorMsg = "Login failed. Please try again.";
       try {
         const errData = await response.json();
         if (errData.message) errorMsg = errData.message;
-      } catch {
-        // ignore JSON parse error
-      }
+      } catch {}
       authMessage.style.color = "red";
       authMessage.innerText = errorMsg;
     }
@@ -98,6 +101,13 @@ registerForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  if (!isValidPassword(password)) {
+    authMessage.style.color = "red";
+    authMessage.innerText =
+      "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+    return;
+  }
+
   try {
     const response = await fetch("/signup", {
       method: "POST",
@@ -106,6 +116,8 @@ registerForm.addEventListener("submit", async (e) => {
     });
 
     if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("username", data.username || username); // Save for later use
       authMessage.style.color = "green";
       authMessage.innerText = "Registration successful! You can now log in.";
       showForm("signin");
@@ -114,9 +126,7 @@ registerForm.addEventListener("submit", async (e) => {
       try {
         const errData = await response.json();
         if (errData.message) errorMsg = errData.message;
-      } catch {
-        // ignore JSON parse error
-      }
+      } catch {}
       authMessage.style.color = "red";
       authMessage.innerText = errorMsg;
     }

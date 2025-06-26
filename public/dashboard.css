@@ -17,6 +17,14 @@ body {
   animation: fadeIn 0.6s ease-out both;
 }
 
+.delay {
+  animation-delay: 0.4s;
+}
+
+.delay-2 {
+  animation-delay: 0.8s;
+}
+
 @keyframes statusFade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -33,19 +41,31 @@ body {
   z-index: 100;
 }
 
-.logo {
+.nav-logo {
   font-size: 1.5rem;
   font-weight: bold;
   color: #1e88e5;
+  text-decoration: none;
 }
 
-.user-controls {
+.nav-links {
+  list-style: none;
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.logout-btn {
+.nav-links li a {
+  color: #0b2545;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.nav-links li a:hover {
+  color: #1e88e5;
+}
+
+.nav-auth .logout-btn {
   background-color: #1e88e5;
   color: white;
   border: none;
@@ -62,7 +82,7 @@ body {
   transform: scale(1.05);
 }
 
-/* Main Content */
+/* Dashboard Main Content */
 .dashboard-content {
   max-width: 600px;
   margin: 3rem auto;
@@ -92,55 +112,4 @@ body {
   background: #f0f8ff;
   cursor: pointer;
   transition: background 0.3s ease;
-}
-
-#drop-area:hover {
-  background: #e1f5fe;
-}
-
-/* File Input (fallback option or visible field) */
-.file-input {
-  margin-bottom: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  border: 2px solid #90caf9;
-  width: 100%;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.file-input:focus {
-  box-shadow: 0 0 10px rgba(30, 136, 229, 0.4);
-  border-color: #1e88e5;
-  outline: none;
-}
-
-/* Upload Button */
-.upload-btn {
-  background-color: #42a5f5;
-  color: white;
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1.1rem;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 6px 18px rgba(66, 165, 245, 0.4);
-}
-
-.upload-btn:hover {
-  background-color: #1e88e5;
-  transform: scale(1.05);
-}
-
-/* Status Message */
-.status-msg {
-  margin-top: 1.2rem;
-  font-weight: 600;
-  font-size: 1.05rem;
-  opacity: 0;
-  animation: statusFade 0.5s ease forwards;
-  color: #333;
 }

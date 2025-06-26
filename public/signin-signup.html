@@ -5,7 +5,6 @@
   <title>Login / Register</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* Hide forms by default */
     .auth-form { display: none; }
     .auth-form.active { display: block; }
 
@@ -28,6 +27,12 @@
       background-color: #1e88e5;
       color: white;
       box-shadow: 0 0 10px rgba(30,136,229,0.6);
+    }
+
+    #authMessage {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -61,42 +66,5 @@
   </div>
 
   <script src="script.js"></script>
-  <script>
-    // Get buttons and forms
-    const btnSignIn = document.getElementById("btnSignIn");
-    const btnSignUp = document.getElementById("btnSignUp");
-    const loginForm = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
-    const authMessage = document.getElementById("authMessage");
-
-    function showForm(type) {
-      if(type === "signin"){
-        loginForm.classList.add("active");
-        registerForm.classList.remove("active");
-        btnSignIn.classList.add("active");
-        btnSignUp.classList.remove("active");
-        authMessage.innerText = "";
-      } else {
-        loginForm.classList.remove("active");
-        registerForm.classList.add("active");
-        btnSignIn.classList.remove("active");
-        btnSignUp.classList.add("active");
-        authMessage.innerText = "";
-      }
-    }
-
-    // Button listeners
-    btnSignIn.addEventListener("click", () => showForm("signin"));
-    btnSignUp.addEventListener("click", () => showForm("signup"));
-
-    // On page load check URL param
-    const params = new URLSearchParams(window.location.search);
-    const formParam = params.get("form");
-    if(formParam === "signup"){
-      showForm("signup");
-    } else {
-      showForm("signin");
-    }
-  </script>
 </body>
 </html>
