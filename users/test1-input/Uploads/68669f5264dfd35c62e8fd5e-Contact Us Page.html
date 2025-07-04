@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- saved from url=(0062)http://127.0.0.1:5500/public_access/contact_us/contact_us.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!--Part 1: Meta Tags-->
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--Part 2: Webpage Title-->
+    <title>Contact Us Page</title>
+
+    <!--Part 3: Default Cascading Style Sheets-->
+    <link id="stylesheet" rel="stylesheet" href="./Contact Us Page_files/contact_us.css">
+
+    <!--Part 4: Default Javascript-->
+    <script defer="" src="./Contact Us Page_files/contact_us.js.download"></script>
+</head>
+<body>
+    <!--Part 5: Main Navigation Bar-->
+    <header class="main-nav-bar">
+        <!--Part 5.1: Contact Us Navigation -->
+        <div class="contact_us" onclick="window.location.href=&#39;contact_us.html&#39;">☎ Contact Us</div>
+
+        <!--Part 5.2: MUN Logo-->
+        <div class="mun-logo" onclick="window.location.href=&#39;../homepage/homepage.html&#39;"></div>
+
+        <!--Part 5.3: Additional Options-->
+        <div class="additional-options">
+            <!--Part 5.3.1: Learn More Navigation-->
+            <span class="learn-more" onclick="window.location.href=&#39;../learn_more/learn_more.html&#39;">Learn More</span>
+
+            <!--Part 5.3.2: Login Navigation-->
+            <span class="sign-in" onclick="window.location.href=&#39;../login/login.html&#39;">Sign In</span>
+            <button class="nav-sign-up-btn" onclick="window.location.href=&#39;../login/login.html&#39;">Sign Up</button>
+        </div>
+    </header>
+
+    <!--Part 6: Sign-in/up Space-->
+    <div class="container" id="container">
+        <!--Part 6.1: Contact Info Container (formerly Sign-up)-->
+        <div class="form-container sign-up">
+          <h1>Contact Info</h1>
+
+          <div class="contact-block">
+            <h3>Address</h3>
+            <p>123 Main Street, Cityville, Country</p>
+          </div>
+
+          <div class="contact-block">
+            <h3>Email</h3>
+            <p>contact@yourdomain.com</p>
+          </div>
+
+          <div class="contact-block">
+            <h3>Phone</h3>
+            <p>+1 234 567 8900</p>
+          </div>
+        </div>
+
+        <!--Part 6.2: Contact Form Container (formerly Sign-in)-->
+        <div class="form-container sign-in">
+          <form>
+            <h1>Contact Us</h1>
+            <p>Please enter your email and your query below.</p>
+
+            <input type="email" placeholder="Email" required="">
+            <textarea placeholder="Your query" required="" style="resize:none; margin-top:8px; padding:10px 15px; border-radius:8px; background-color:#1f1f1f; color:#f5e6c5; border:none; width:100%; font-size:13px; outline:none;"></textarea>
+
+            <button type="submit">Send Message</button>
+          </form>
+        </div>
+
+        <!--Part 6.3: Toggle Container-->
+        <div class="toggle-container">
+            <div class="toggle">
+                <!--Part 6.3.1: Left Toggle: Contact Form-->
+                <div class="toggle-panel toggle-left">
+                    <h1>Need Assistance?</h1>
+                    <p>Send us a message or find our contact details here.</p>
+                    <button class="hidden" id="login">Contact Form</button>
+                </div>
+
+                <!--Part 6.3.2: Right Toggle: Contact Info-->
+                <div class="toggle-panel toggle-right">
+                    <h1>Welcome!</h1>
+                    <p>Here is how you can get in touch with us.</p>
+                    <button class="hidden" id="register">Contact Info</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+
+</body></html>

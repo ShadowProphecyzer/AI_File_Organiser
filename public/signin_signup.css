@@ -1,0 +1,134 @@
+/* auth.css */
+
+@keyframes rainbowGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: rainbowGradient 5s linear infinite;
+}
+
+/* signin_signup.css */
+
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  background: #000;
+  color: #fff;
+}
+
+.auth-container {
+  background-color: #1f2937; /* Tailwind gray-900 */
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+  max-width: 28rem;
+  margin: 3rem auto;
+}
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  background: linear-gradient(90deg, #f87171, #fde68a, #f472b6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: rainbowGradient 5s linear infinite;
+}
+
+.auth-toggle-btn {
+  margin: 0 0.5rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.auth-toggle-btn.signin {
+  background: #ec4899;
+  color: #fff;
+}
+.auth-toggle-btn.signin:hover {
+  background: #be185d;
+}
+.auth-toggle-btn.signup {
+  background: #fde68a;
+  color: #000;
+}
+.auth-toggle-btn.signup:hover {
+  background: #fbbf24;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #111827;
+  color: #fff;
+  margin-bottom: 1rem;
+  border: none;
+  outline: none;
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #ec4899, #fde68a);
+  color: #000;
+  transition: opacity 0.2s;
+}
+.auth-form button:hover {
+  opacity: 0.85;
+}
+
+/* Popup notification styles */
+.popup-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1f2937;
+  color: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  z-index: 9999;
+  font-size: 1.1rem;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.popup-notification.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.popup-notification .popup-close {
+  display: block;
+  margin: 1.5rem auto 0 auto;
+  background: #374151;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.popup-notification .popup-close:hover {
+  background: #111827;
+}
