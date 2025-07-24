@@ -290,6 +290,21 @@ class MultiUserPipelineManager {
         try {
             console.log(`Creating user directory structure for: ${userId}`);
             await initializeUserDirectories(userId);
+            // Create <username>_context.json in the context folder with prefilled text
+            const userPaths = getUserPaths(userId);
+            const contextFilePath = path.join(userPaths.CONTEXT_FOLDER, `${userId}_context.json`);
+            const contextContent = {
+                "instructions": [
+                    "For carrying out file organisation you as an AI can carry out 4 instructions in bash for every file:",
+                    "1. Make a directory: mkdir",
+                    "2. Enter directory: cd",
+                    "3. Delete file/directory: rm",
+                    "4. Move file: mv",
+                    "Keep in mind the below information when generating the output."
+                ]
+            };
+            await fs.writeFile(contextFilePath, JSON.stringify(contextContent, null, 2), 'utf-8');
+            console.log(`Context file created for user: ${userId}`);
             console.log(`User ${userId} created successfully`);
             return true;
         } catch (error) {
