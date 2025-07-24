@@ -3,42 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explorer - AI File Organiser</title>
-
-  <!-- Tailwind CSS CDN -->
+  <title>File Explorer - AI File Organiser</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Custom CSS -->
+  <link rel="stylesheet" href="dashboard.css" />
   <link rel="stylesheet" href="explorer.css" />
-
-  <!-- Script -->
   <script defer src="explorer.js"></script>
 </head>
-<body class="bg-black text-white min-h-screen">
-
+<body class="bg-white text-black min-h-screen">
   <!-- Navbar -->
-  <nav id="navbar" class="flex justify-between items-center px-8 py-4 fixed w-full top-0 bg-black transition duration-300 z-50">
+  <nav id="navbar" class="flex justify-between items-center px-8 py-4 fixed w-full top-0 bg-white transition duration-300 z-50 border-b border-gray-200">
     <div class="text-2xl font-bold bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
       AI File Organiser
     </div>
     <div class="flex-1 flex justify-center">
       <ul class="flex space-x-6">
         <li><a href="contact_us.html" class="hover:text-pink-400 transition">Contact Us</a></li>
-        <li><a href="explorer.html" class="hover:text-pink-400 transition">Explorer</a></li>
+        <li><a href="dashboard.html" class="hover:text-pink-400 transition">Dashboard</a></li>
       </ul>
     </div>
-    <div class="flex items-center">
-      <a href="signin_signup.html#signin-section" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-2 rounded-full font-semibold hover:opacity-80 transition ml-4">Sign Out</a>
+    <div class="flex items-center space-x-4">
+      <input id="dashboard-search-bar" type="text" placeholder="Search..." class="px-4 py-2 rounded bg-gray-100 text-black focus:outline-none focus:ring-2 focus:ring-pink-400" />
+      <a href="signin_signup.html#signin-section" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-2 rounded-full font-semibold hover:opacity-80 transition ml-2">Sign Out</a>
     </div>
   </nav>
 
-  <div class="explorer-container mt-32 max-w-3xl mx-auto p-8 bg-gray-900 rounded-lg shadow-lg">
-    <h1 class="explorer-title animate-gradient text-3xl font-bold mb-6 text-center bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent">Your Files</h1>
-    <div class="mb-6 flex justify-center">
-      <input id="search-bar" type="text" placeholder="Search files or folders..." class="w-full max-w-md px-4 py-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-pink-400" />
-    </div>
-    <div id="explorer-list" class="explorer-list bg-gray-800 rounded p-4 min-h-[200px] text-white"></div>
+  <div class="explorer-container mt-32 mx-auto max-w-3xl p-8 rounded-xl shadow-lg border border-gray-200 bg-gray-50">
+    <h1 class="explorer-title animate-gradient mb-8 text-center">Your Files</h1>
+    <input id="search-bar" type="text" placeholder="Search files and folders..." class="mb-6 w-full px-4 py-2 rounded bg-gray-100 text-black focus:outline-none focus:ring-2 focus:ring-pink-400 border border-gray-300" />
+    <div id="explorer-list" class="explorer-list"></div>
   </div>
-
 </body>
 </html>

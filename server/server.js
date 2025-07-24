@@ -9,9 +9,21 @@ const fs = require('fs');
 const session = require('express-session');
 const multer = require('multer');
 
+const MultiUserPipelineManager = require('../organiser/multi-user-pipeline');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Initialize multi-user pipeline manager
+const pipelineManager = new MultiUserPipelineManager();
+pipelineManager.initialize().then(() => {
+  console.log('Multi-user pipeline manager initialized');
+  // Start monitoring for file processing
+  pipelineManager.startMonitoring();
+}).catch(err => {
+  console.error('Failed to initialize pipeline manager:', err);
+});
 
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/aifileorganiser', {
@@ -49,23 +61,29 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// Multer storage config for user input folder
+// Multer storage config for user queue folder
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (!req.session.user) return cb(new Error('Unauthorized'));
-    const userInputUploadsDir = path.join(__dirname, '../users', req.session.user.name + '-input', 'Uploads');
-    if (!fs.existsSync(userInputUploadsDir)) {
-      fs.mkdirSync(userInputUploadsDir, { recursive: true });
+    const userQueueDir = path.join(__dirname, '../users', req.session.user.name, 'queue');
+    if (!fs.existsSync(userQueueDir)) {
+      fs.mkdirSync(userQueueDir, { recursive: true });
     }
-    cb(null, userInputUploadsDir);
+    // Strict enforcement: only allow upload to queue folder
+    if (!userQueueDir.endsWith(path.join('users', req.session.user.name, 'queue'))) {
+      console.error('Attempted upload to non-queue folder:', userQueueDir);
+      return cb(new Error('Uploads are only allowed to the queue folder.'));
+    }
+    cb(null, userQueueDir);
   },
   filename: function (req, file, cb) {
-    // Use user ObjectId as prefix
-    const userId = req.session.user && req.session.user._id ? req.session.user._id : 'unknown';
-    cb(null, userId + '-' + file.originalname);
+    cb(null, file.originalname);
   }
 });
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 // Helper to sanitize username (alphanumeric, hyphens, underscores only)
 function isValidUsername(username) {
@@ -74,6 +92,7 @@ function isValidUsername(username) {
 
 // Sign Up route
 app.post('/signup', async (req, res) => {
+  console.log(`[SIGNUP] Attempt for user: ${req.body.name}`);
   const { name, email, password } = req.body;
 
   // Username validation
@@ -98,33 +117,12 @@ app.post('/signup', async (req, res) => {
   const user = new User({ name, email, password: hashedPassword });
   await user.save();
 
-  // Create new user folder structure
-  const userDir = path.join(__dirname, '../users', name);
-  const inputDir = path.join(userDir, `${name}-input`);
-  const outputDir = path.join(userDir, `${name}-output`);
-  const infoDir = path.join(userDir, `${name}_info`);
-  const infoFile = path.join(infoDir, `${name}--info.txt`);
-  // Input subfolders
-  const inputSubfolders = ['Uploads', 'Queue', 'Splitter', 'Scanner', 'Holder'];
-  // Output subfolders
-  const outputSubfolders = ['Outputs', 'Grouping', 'Merging', 'Storing', 'Multimerge'];
+  // Create new user folder structure using pipeline
   try {
-    // Remove old structure if it exists
-    if (fs.existsSync(userDir)) {
-      fs.rmSync(userDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(userDir, { recursive: true });
-    fs.mkdirSync(inputDir);
-    fs.mkdirSync(outputDir);
-    fs.mkdirSync(infoDir);
-    for (const sub of inputSubfolders) {
-      fs.mkdirSync(path.join(inputDir, sub));
-    }
-    for (const sub of outputSubfolders) {
-      fs.mkdirSync(path.join(outputDir, sub));
-    }
-    fs.writeFileSync(infoFile, ''); // No initial content
+    // Initialize user directories using the pipeline system
+    await pipelineManager.createUser(name);
   } catch (err) {
+    console.error('Error creating user directories:', err);
     return res.status(500).json({ message: 'User registered, but failed to create user directories.' });
   }
 
@@ -133,6 +131,7 @@ app.post('/signup', async (req, res) => {
 
 // Sign In route
 app.post('/signin', async (req, res) => {
+  console.log(`[SIGNIN] Attempt for email: ${req.body.email}`);
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -149,22 +148,38 @@ app.post('/signin', async (req, res) => {
 
 // Example protected route for dashboard data
 app.get('/api/dashboard', requireLogin, (req, res) => {
+  console.log(`[DASHBOARD] Accessed by user: ${req.session.user.name}`);
   res.json({ message: `Welcome, ${req.session.user.name}!` });
 });
 
 // File upload route (protected)
-app.post('/upload', requireLogin, upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-  res.json({ message: 'File uploaded successfully', filename: req.file.filename });
+app.post('/upload', requireLogin, (req, res, next) => {
+  console.log(`[UPLOAD] User: ${req.session.user.name} is uploading a file...`);
+  upload.single('file')(req, res, function (err) {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        console.error(`[UPLOAD] File too large for user: ${req.session.user.name}`);
+        return res.status(400).json({ message: 'File too large. Max size is 5MB.' });
+      }
+      console.error(`[UPLOAD] Error for user: ${req.session.user.name}:`, err.message);
+      return res.status(400).json({ message: err.message });
+    }
+    if (!req.file) {
+      console.error(`[UPLOAD] No file uploaded by user: ${req.session.user.name}`);
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    console.log(`[UPLOAD] File uploaded successfully for user: ${req.session.user.name}, filename: ${req.file.filename}`);
+    res.json({ message: 'File uploaded successfully', filename: req.file.filename });
+  });
 });
 
 const getUserRootDir = (user) => path.join(__dirname, '../users', user.name);
 
 // Explorer API route
 app.get('/api/explorer', requireLogin, (req, res) => {
-  const userDir = getUserRootDir(req.session.user);
+  const dir = req.query.dir || '';
+  console.log(`[EXPLORER] User: ${req.session.user.name} browsing dir: ${dir}`);
+  const userDir = path.join(getUserRootDir(req.session.user), dir);
   let folders = [], files = [];
   try {
     if (fs.existsSync(userDir)) {
@@ -183,10 +198,84 @@ app.get('/api/explorer', requireLogin, (req, res) => {
   }
 });
 
+// Get user pipeline statistics
+app.get('/api/user/stats', requireLogin, async (req, res) => {
+  console.log(`[STATS] User: ${req.session.user.name} requested stats`);
+  try {
+    const stats = await pipelineManager.getUserStats(req.session.user.name);
+    if (stats) {
+      res.json(stats);
+    } else {
+      res.status(404).json({ message: 'User stats not found' });
+    }
+  } catch (err) {
+    console.error('Error getting user stats:', err);
+    res.status(500).json({ message: 'Failed to get user statistics' });
+  }
+});
+
+// Manually trigger pipeline for current user
+app.post('/api/user/process', requireLogin, async (req, res) => {
+  console.log(`[PROCESS] User: ${req.session.user.name} triggered manual processing`);
+  try {
+    await pipelineManager.processUserFiles(req.session.user.name);
+    res.json({ message: 'Pipeline processing triggered successfully' });
+  } catch (err) {
+    console.error('Error triggering pipeline:', err);
+    res.status(500).json({ message: 'Failed to trigger pipeline processing' });
+  }
+});
+
+// Get all users stats (admin endpoint - you might want to add admin auth)
+app.get('/api/admin/stats', async (req, res) => {
+  console.log(`[ADMIN] Admin requested all user stats`);
+  try {
+    const allStats = await pipelineManager.getAllUserStats();
+    res.json(allStats);
+  } catch (err) {
+    console.error('Error getting all user stats:', err);
+    res.status(500).json({ message: 'Failed to get all user statistics' });
+  }
+});
+
+// File system API (newly added)
+
+const USER_DATA_ROOT = path.join(__dirname, 'user_data');
+
+// Dummy authentication middleware (replace with real one)
+function authenticate(req, res, next) {
+  // req.user = getUserFromSession(req); // Implement your auth
+  req.user = 'demo_user'; // For testing
+  next();
+}
+
+// List files/folders
+app.get('/api/files', authenticate, (req, res) => {
+  const user = req.user;
+  const dir = req.query.dir || '';
+  const userDir = path.join(USER_DATA_ROOT, user, dir);
+
+  fs.readdir(userDir, { withFileTypes: true }, (err, files) => {
+    if (err) return res.status(500).json({ error: 'Cannot read directory' });
+    res.json(files.map(f => ({
+      name: f.name,
+      isDirectory: f.isDirectory()
+    })));
+  });
+});
+
+// Download file
+app.get('/api/download', authenticate, (req, res) => {
+  const user = req.user;
+  const filePath = req.query.path;
+  const absPath = path.join(USER_DATA_ROOT, user, filePath);
+
+  if (!absPath.startsWith(path.join(USER_DATA_ROOT, user))) {
+    return res.status(403).send('Forbidden');
+  }
+  res.download(absPath);
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/homepage.html'));
-});
+app.listen(PORT, () => console.log(`
