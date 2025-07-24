@@ -2,8 +2,11 @@ const fs = require('fs').promises;
 const path = require('path');
 require('dotenv').config();
 const axios = require('axios');
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const { parse: csvParse } = require('csv-parse/sync');
 
-// --- Begin: Inlined pipeline.js logic ---
+// --- User directory helpers ---
 function getUserPaths(userId) {
     const userDir = path.join(__dirname, '../users', userId);
     return {
@@ -32,15 +35,59 @@ async function initializeUserDirectories(userId) {
     }
 }
 
+// Helper: chunk text to fit OpenAI context window (approx 4000 tokens = ~16k chars)
+function chunkText(text, maxLen = 16000) {
+    const chunks = [];
+    for (let i = 0; i < text.length; i += maxLen) {
+        chunks.push(text.slice(i, i + maxLen));
+    }
+    return chunks;
+}
+
+async function extractTextFromFile(filePath, ext) {
+    // Only allow text-based files: PDF, DOCX, TXT, CSV, JSON, YAML, XML, LOG, MD, INI
+    if (["txt","md","log","ini","yaml","yml","json","xml"].includes(ext)) {
+        return await fs.readFile(filePath, 'utf-8');
+    } else if (ext === "csv") {
+        const raw = await fs.readFile(filePath, 'utf-8');
+        const records = csvParse(raw, { columns: false, skip_empty_lines: true });
+        return records.map(row => row.join(", ")).join("\n");
+    } else if (ext === "pdf") {
+        const data = await fs.readFile(filePath);
+        const parsed = await pdfParse(data);
+        return parsed.text;
+    } else if (ext === "docx") {
+        const data = await fs.readFile(filePath);
+        const result = await mammoth.extractRawText({ buffer: data });
+        return result.value;
+    } else {
+        // Skip all other types (images, audio, etc.)
+        return null;
+    }
+}
+
+// --- Main pipeline logic: OpenAI text-only ---
 async function runPipeline(userId) {
     if (!userId || typeof userId !== 'string') {
         throw new Error('Valid user ID is required');
     }
     const userPaths = getUserPaths(userId);
+    // Read the prompt from prompt.txt in the same directory as this file
+    let prompt;
+    try {
+        const promptPath = path.join(__dirname, 'prompt.txt');
+        prompt = await fs.readFile(promptPath, 'utf-8');
+        if (!prompt.trim()) {
+            throw new Error('Prompt in prompt.txt is empty');
+        }
+    } catch (err) {
+        console.error(`[PIPELINE] Failed to read prompt.txt:`, err);
+        throw err;
+    }
     try {
         const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
         if (queueFiles.length === 0) {
-            console.log(`No files to process for user: ${userId}`);
+            console.log(`[PIPELINE] No files to process for user: ${userId}`);
             return;
         }
         // Read all context files for the user
@@ -52,38 +99,29 @@ async function runPipeline(userId) {
                 contextText += await fs.readFile(ctxPath, 'utf-8') + '\n';
             }
         } catch (ctxErr) {
-            console.warn('No context files or error reading context for user:', userId, ctxErr);
+            console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
         }
-        console.log(`Processing ${queueFiles.length} files for user: ${userId}`);
+        console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
         for (const fileName of queueFiles) {
             const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
             const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
             try {
-                // Read file content
-                const fileContent = await fs.readFile(sourceFile, 'utf-8');
-                let outputJson = null;
-                if (process.env.AI_PROVIDER === 'HUGGINGFACE') {
-                    // Hugging Face Inference API
-                    const response = await axios.post(
-                        `https://api-inference.huggingface.co/models/${process.env.HF_MODEL}`,
-                        { inputs: contextText + '\n' + fileContent },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${process.env.HF_API_KEY}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
-                    outputJson = response.data;
-                } else {
-                    // Default: OpenAI
+                const ext = fileName.split('.').pop().toLowerCase();
+                const text = await extractTextFromFile(sourceFile, ext);
+                if (!text) {
+                    console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
+                    continue;
+                }
+                const chunks = chunkText(text);
+                let allOutputs = [];
+                for (const chunk of chunks) {
                     const response = await axios.post(
                         process.env.AI_COMPLETION_URL,
                         {
                             model: process.env.AI_MODEL,
                             messages: [
-                                { role: 'system', content: process.env.AI_PROMPT + '\n' + contextText },
-                                { role: 'user', content: fileContent }
+                                { role: 'system', content: prompt + '\n' + contextText },
+                                { role: 'user', content: chunk }
                             ]
                         },
                         {
@@ -93,31 +131,28 @@ async function runPipeline(userId) {
                             }
                         }
                     );
-                    const output = response.data.choices[0].message.content;
-                    outputJson = JSON.parse(output);
+                    allOutputs.push(response.data.choices[0].message.content);
                 }
                 const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
-                await fs.writeFile(outputFile, JSON.stringify(outputJson, null, 2), 'utf-8');
-                // Move original file to organized
+                await fs.writeFile(outputFile, JSON.stringify(allOutputs, null, 2), 'utf-8');
                 await fs.rename(sourceFile, targetFile);
-                console.log(`Processed file: ${fileName} for user: ${userId}`);
+                console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
             } catch (fileError) {
-                console.error(`Error processing file ${fileName} for user ${userId}:`, fileError);
+                console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
             }
         }
-        console.log(`Pipeline completed for user: ${userId}`);
+        console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
     } catch (error) {
-        console.error(`Error running pipeline for user ${userId}:`, error);
+        console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
         throw error;
     }
 }
-// --- End: Inlined pipeline.js logic ---
 
+// --- Multi-user manager ---
 class MultiUserPipelineManager {
     constructor() {
         this.usersDirectory = path.join(__dirname, '../users');
         this.isRunning = false;
-        this.processingInterval = 5000; // Check every 5 seconds
         this.userLastProcessed = new Map(); // Track last processing time per user
     }
 
@@ -126,11 +161,10 @@ class MultiUserPipelineManager {
      */
     async initialize() {
         try {
-            // Ensure users directory exists
             await fs.mkdir(this.usersDirectory, { recursive: true });
-            console.log('Multi-user pipeline manager initialized');
+            console.log('[INIT] Multi-user pipeline manager initialized');
         } catch (error) {
-            console.error('Failed to initialize multi-user pipeline manager:', error);
+            console.error('[INIT] Failed to initialize multi-user pipeline manager:', error);
             throw error;
         }
     }
@@ -141,11 +175,11 @@ class MultiUserPipelineManager {
     async getAllUsers() {
         try {
             const entries = await fs.readdir(this.usersDirectory, { withFileTypes: true });
-            return entries
-                .filter(entry => entry.isDirectory())
-                .map(entry => entry.name);
+            const users = entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
+            console.log(`[SCAN] Found users: ${users.join(', ')}`);
+            return users;
         } catch (error) {
-            console.error('Error reading users directory:', error);
+            console.error('[SCAN] Error reading users directory:', error);
             return [];
         }
     }
@@ -157,9 +191,9 @@ class MultiUserPipelineManager {
         try {
             const userPaths = getUserPaths(userId);
             const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
+            console.log(`[QUEUE] User ${userId} has ${queueFiles.length} files in queue`);
             return queueFiles.length > 0;
         } catch (error) {
-            // Queue folder might not exist yet
             return false;
         }
     }
@@ -169,26 +203,18 @@ class MultiUserPipelineManager {
      */
     async processUserFiles(userId) {
         try {
-            console.log(`Processing files for user: ${userId}`);
-            
-            // Initialize user directories if they don't exist
+            console.log(`[PROCESS] Starting processing for user: ${userId}`);
             await initializeUserDirectories(userId);
-            
-            // Check if user has files to process
             const hasFiles = await this.hasFilesInQueue(userId);
             if (!hasFiles) {
+                console.log(`[PROCESS] No files to process for user: ${userId}`);
                 return;
             }
-
-            // Run the pipeline for this user
             await runPipeline(userId);
-            
-            // Update last processed time
             this.userLastProcessed.set(userId, Date.now());
-            
-            console.log(`Successfully processed files for user: ${userId}`);
+            console.log(`[PROCESS] Finished processing for user: ${userId}`);
         } catch (error) {
-            console.error(`Error processing files for user ${userId}:`, error);
+            console.error(`[PROCESS] Error processing files for user ${userId}:`, error);
         }
     }
 
@@ -196,16 +222,12 @@ class MultiUserPipelineManager {
      * Process files for all users
      */
     async processAllUsers() {
+        console.log('[MONITOR] Scanning all users for queued files...');
         const users = await this.getAllUsers();
-        
         if (users.length === 0) {
-            console.log('No users found. Waiting for users to be created...');
+            console.log('[MONITOR] No users found. Waiting for users to be created...');
             return;
         }
-
-        console.log(`Found ${users.length} users: ${users.join(', ')}`);
-
-        // Process each user's files
         for (const userId of users) {
             await this.processUserFiles(userId);
         }
@@ -223,17 +245,18 @@ class MultiUserPipelineManager {
         console.log('Starting multi-user pipeline monitoring...');
         this.isRunning = true;
 
-        // Initial processing (disabled for manual-only mode)
-        // await this.processAllUsers();
+        // Initial processing
+        await this.processAllUsers();
 
-        // Set up interval for continuous monitoring (disabled)
-        // this.monitoringInterval = setInterval(async () => {
-        //     if (this.isRunning) {
-        //         await this.processAllUsers();
-        //     }
-        // }, this.processingInterval);
+        // Set up interval for continuous monitoring (every 10 seconds)
+        this.monitoringInterval = setInterval(async () => {
+            if (this.isRunning) {
+                console.log('[MONITOR] Running automatic processing for all users...');
+                await this.processAllUsers();
+            }
+        }, 10000);
 
-        console.log('Multi-user pipeline monitoring started (manual mode, no automatic processing)');
+        console.log('Multi-user pipeline monitoring started (automatic processing every 10 seconds)');
     }
 
     /**
