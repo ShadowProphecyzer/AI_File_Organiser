@@ -28,7 +28,7 @@ pipelineManager.initialize().then(() => {
 });
 
 // MongoDB connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/aifileorganiser';
+const mongoUri = process.env.MONGO_DB;
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
