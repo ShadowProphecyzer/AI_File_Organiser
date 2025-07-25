@@ -86,23 +86,50 @@ async function runPipeline(userId) {
     }
     try {
         const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
+        // Update current_system_file_name in current_file_name.json before processing
+        const currentFileNamePath = path.join(userPaths.CONTEXT_FOLDER, 'current_file_name.json');
+        let currentFileNameData = {};
+        try {
+            const currentFileNameRaw = await fs.readFile(currentFileNamePath, 'utf-8');
+            currentFileNameData = JSON.parse(currentFileNameRaw);
+        } catch (e) {
+            // If file doesn't exist or is invalid, start fresh
+            currentFileNameData = {};
+        }
         if (queueFiles.length === 0) {
+            currentFileNameData.current_system_file_name = "";
+            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
             console.log(`[PIPELINE] No files to process for user: ${userId}`);
             return;
         }
-        // Read all context files for the user
-        let contextText = '';
+        // Read and chunk all context files for the user, include as system messages
+        let contextMessages = [];
         try {
             const contextFiles = await fs.readdir(userPaths.CONTEXT_FOLDER);
             for (const ctxFile of contextFiles) {
                 const ctxPath = path.join(userPaths.CONTEXT_FOLDER, ctxFile);
-                contextText += await fs.readFile(ctxPath, 'utf-8') + '\n';
+                let ctxContent = await fs.readFile(ctxPath, 'utf-8');
+                // Chunk context file if large
+                const ctxChunks = chunkText(ctxContent);
+                for (let i = 0; i < ctxChunks.length; i++) {
+                    contextMessages.push({
+                        role: 'system',
+                        content: `[CONTEXT FILE: ${ctxFile}${ctxChunks.length > 1 ? ` (chunk ${i+1}/${ctxChunks.length})` : ''}]:\n` + ctxChunks[i]
+                    });
+                }
             }
         } catch (ctxErr) {
             console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
         }
+        // Add the prompt as the first system message
+        contextMessages.unshift({ role: 'system', content: prompt });
         console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
         for (const fileName of queueFiles) {
+            // Update current_system_file_name before processing this file
+            currentFileNameData.current_system_file_name = fileName;
+            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
+            // Wait 2 seconds before sending to AI
+            await new Promise(resolve => setTimeout(resolve, 2000));
             const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
             const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
             try {
@@ -115,14 +142,16 @@ async function runPipeline(userId) {
                 const chunks = chunkText(text);
                 let allOutputs = [];
                 for (const chunk of chunks) {
+                    // Compose messages: prompt, all context chunks, then user chunk
+                    const messages = [
+                        ...contextMessages,
+                        { role: 'user', content: chunk }
+                    ];
                     const response = await axios.post(
                         process.env.AI_COMPLETION_URL,
                         {
                             model: process.env.AI_MODEL,
-                            messages: [
-                                { role: 'system', content: prompt + '\n' + contextText },
-                                { role: 'user', content: chunk }
-                            ]
+                            messages
                         },
                         {
                             headers: {
@@ -133,8 +162,43 @@ async function runPipeline(userId) {
                     );
                     allOutputs.push(response.data.choices[0].message.content);
                 }
+                // --- PRETTY JSON OUTPUT HANDLING ---
+                // If only one output, try to extract and pretty-print the JSON
+                let outputToWrite;
+                if (allOutputs.length === 1) {
+                    let raw = allOutputs[0];
+                    try {
+                        // Remove markdown code block if present
+                        raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                        // Remove generic code block if present
+                        raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                        // Parse JSON
+                        const parsed = JSON.parse(raw);
+                        outputToWrite = JSON.stringify(parsed, null, 2);
+                    } catch (err) {
+                        console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
+                        outputToWrite = raw;
+                    }
+                } else {
+                    // Multi-chunk: save as array of pretty-printed JSON objects if possible
+                    let parsedChunks = [];
+                    for (let raw of allOutputs) {
+                        try {
+                            raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                            raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                            parsedChunks.push(JSON.parse(raw));
+                        } catch (err) {
+                            parsedChunks.push(raw);
+                        }
+                    }
+                    try {
+                        outputToWrite = JSON.stringify(parsedChunks, null, 2);
+                    } catch (err) {
+                        outputToWrite = JSON.stringify(allOutputs, null, 2);
+                    }
+                }
                 const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
-                await fs.writeFile(outputFile, JSON.stringify(allOutputs, null, 2), 'utf-8');
+                await fs.writeFile(outputFile, outputToWrite, 'utf-8');
                 await fs.rename(sourceFile, targetFile);
                 console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
             } catch (fileError) {
@@ -304,6 +368,10 @@ class MultiUserPipelineManager {
                 ]
             };
             await fs.writeFile(contextFilePath, JSON.stringify(contextContent, null, 2), 'utf-8');
+            // Create current_file_name.json in the context folder with empty current_system_file_name
+            const newContextFilePath = path.join(userPaths.CONTEXT_FOLDER, 'current_file_name.json');
+            const newContextContent = { "current_system_file_name": "" };
+            await fs.writeFile(newContextFilePath, JSON.stringify(newContextContent, null, 2), 'utf-8');
             console.log(`Context file created for user: ${userId}`);
             console.log(`User ${userId} created successfully`);
             return true;
