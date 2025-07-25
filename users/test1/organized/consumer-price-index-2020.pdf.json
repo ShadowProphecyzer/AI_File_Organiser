@@ -1,0 +1,7 @@
+{
+  "file_name": "consumer-price-index-2020.pdf",
+  "description": "Analysis of Singapore's 2020 Consumer Price Index with insights into inflation trends and income group impacts.",
+  "tags": "CPI, consumer, price, index, Singapore, inflation, 2020, housing, utilities, accommodation, MAS, core, measure, rental, expenditure, market, transport, health, clothing, footwear, education, food, communication, recreation, culture, income, group, division, statistics, economy, price, indices, Monetary, Authority, inflationrate, households, weighting, pattern, expenditure, goods, services, imputed, rentals, cost, statistics, inflation, trends, household, income",
+  "suggested_file_path": "economic_reports/consumer-price-index-2020.pdf",
+  "bash_command": "mkdir -p economic_reports && mv consumer-price-index-2020.pdf economic_reports/"
+}

@@ -6,8 +6,50 @@
     "3. Delete file/directory: rm <file_or_directory>",
     "4. Move file: mv <source> <destination>",
     "5. Every command must start with: cd users/test1/organized (all file operations must be performed from inside this directory)",
-    "6. Try to suggest file paths in similar locations as previous files if possible. ",
+    "6. Try to suggest file paths in similar locations as previous files based on below context wherever possible.",
     "Always output only the bash commands needed, nothing else."
   ],
-  "user": "test1"
+  "user": "test1",
+  "counting-particles-by-mass-the-mole-WHs4xxgsfg8dDyvP": {
+    "file_name": "electronic-configurations-9qFmdFXmrWT8xgsc.pdf",
+    "description": "Chemistry structured questions, focusing on mole concepts, empirical formulas, and chemical reactions, enhancing IBDP exam preparation.",
+    "tags": "chemistry, moles, empirical, formula, reactions, questions, exam, preparation, IBDP, structured, questions, elements, oxygen, hydrogen, carbon, nitrogen, molecule, percentage, mass, concentration, compound, balance, equation, nitrogen, ammonia, oxide, urea, composition, decomposition, structure, calculation, molar, mass, atomic, particles, bonds, state, energy",
+    "suggested_file_path": "educational_materials/chemistry/electronic-configurations-9qFmdFXmrWT8xgsc.pdf"
+  },
+  "electronic-configurations-9qFmdFXmrWT8xgsc": {
+    "file_name": "electronic-configurations-9qFmdFXmrWT8xgsc.pdf",
+    "description": "Comprehensive chemistry questions covering electronic configurations, ionisation energies, and emission spectra, supporting IBDP exam preparation. Exam questions on ionisation energies, element groups, and electron configuration analysis for chemistry students.",
+    "tags": "chemistry, particles, mass, mole, electronic, configurations, emission, spectra, energy, levels, ionisation, exam, preparation, questions, IBDP, atoms, electrons, shells, hydrogen, orbital, wavelength, frequency, spectrum, element, configuration, transition, atom, ion, ions, bond, bonds, sublevels, orbitals, infrared, radio, electron, empirical, structure, proton, neutron, energies, lines, elements, helium, lithium, periodic, table, trends, reactivity, metals, gallium, krypton, selenium, deviation, analysis, calculations, convergence, limit, formula, reactions, structured, molar, atomic",
+    "suggested_file_path": "educational_materials/chemistry/counting-particles-by-mass-the-mole-WHs4xxgsfg8dDyvP.pdf"
+  },
+  "ideal-gases-VRXjng84k66G6g2Y": {
+    "file_name": "electronic-configurations-9qFmdFXmrWT8xgsc.pdf",
+    "description": "Chemistry exam material with structured questions on ideal gases, molar calculations, and gas laws for IBDP preparation.",
+    "tags": "chemistry, exams, questions, gases, ideal, molar, volume, real, chemical, reactions, calculations, magnesium, nitrate, decomposition, ammonia, combustion, oxygen, nitrogen, volume, pressure, helium, temperature, sodium, azide, lithium, hydroxide, carbonate, pressure, hydrogen, phosphine, phosphorous, charles, law, container, tupperware, fridge, helium, pa, balloon, oxygen, diatomic, homologous, series, alkanes",
+    "suggested_file_path": "educational_materials/chemistry/electronic-configurations-9qFmdFXmrWT8xgsc.pdf"
+  },
+  "energy-from-fuels-QyF3sMWBgSyVM2qp": {
+    "file_name": "energy-from-fuels-QyF3sMWBgSyVM2qp.pdf",
+    "description": "IBDP chemistry questions on energy from fuels, including combustion reactions, fuel cells, and greenhouse gases.",
+    "tags": "chemistry, energy, fuels, combustion, carbon, dioxide, greenhouse, biofuels, cells, hydrocarbons, alkanes, methanol, bioethanol, equations, climate, change, reactions, oxidation, reduction, exam, questions, IBDP, hydrocarbons, isooctane, tetradecane, hydrogen, oxygen, experiments, calorimetry, efficiency, environment, biofuel, hydrogen, global, warming",
+    "suggested_file_path": "educational_materials/chemistry/energy-from-fuels-QyF3sMWBgSyVM2qp.pdf"
+  },
+  "how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM": {
+    "file_name": "how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM.pdf",
+    "description": "Structured questions on chemical equilibrium concepts, including Le Chatelier's Principle, equilibrium constants, and Gibbs energy for IBDP exams. Examination questions on chemical equilibrium, tract reactions, and equilibrium constant calculations.",
+    "tags": "chemistry, equilibrium, dynamic, constant, reaction, quotient, lechateliers, principle, gibbs, energy, enthalpy, synthesis, ammonia, esterification, nitrogen, halogens, temperature, pressure, catalyst, endothermic, exothermic, questions, IBDP, exams, kinetic, medium, hard, structured, challenge, equilibria, law, concentration, K, moles, chemical, container, position, decomposition, effect, reactants, products, equilibriumconstant, SO3, mol, dm, expression, hydrogen, ethanol, ethanoic, acid, water, ethyl, volume, mixture, SO2, experiments, calculation, carbon, structures, diagrams, graphs",
+    "suggested_file_path": "educational_materials/chemistry/how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM.pdf"
+  },
+  "measuring-enthalpy-change-8QqmqpQnwtC3n2Gk": {
+    "file_name": "measuring-enthalpy-change-8QqmqpQnwtC3n2Gk.pdf",
+    "description": "Structured IBDP chemistry questions on enthalpy changes, calorimetry experiments, and reaction energies. Exam questions on enthalpy change measurements involving copper sulfate and ethanol reactions.",
+    "tags": "chemistry, enthalpy, change, heat, temperature, exothermic, endothermic, energy, profiles, reaction, standard, calorimetry, experiments, easy, medium, hard, total, marks, IBDP, structured, questions, system, decrease, formation, conditions, equations, combustion, neutralisation, hydrochloric, sodium, hydroxide, copper, zinc, acid, solution, ethanol, spirit, burner, calorimeter, students, practical, measurements, iron, data, bond, sulfate, measurement, experiment, hydrate, lithium, chloride, calculations, uncertainty, neutralization, sulfur, molar, empirical, formula, catalyst, pentahydrate, cycle, atmospheric, gain, hydrogen, oxide, moles, thermodynamic, mol, mass, exam, preparation, chemical",
+    "suggested_file_path": "educational_materials/chemistry/measuring-enthalpy-change-8QqmqpQnwtC3n2Gk.pdf"
+  },
+  "consumer-price-index-2020": {
+    "file_name": "consumer-price-index-2020.pdf",
+    "description": "Analysis of Singapore's 2020 Consumer Price Index with insights into inflation trends and income group impacts.",
+    "tags": "CPI, consumer, price, index, Singapore, inflation, 2020, housing, utilities, accommodation, MAS, core, measure, rental, expenditure, market, transport, health, clothing, footwear, education, food, communication, recreation, culture, income, group, division, statistics, economy, price, indices, Monetary, Authority, inflationrate, households, weighting, pattern, expenditure, goods, services, imputed, rentals, cost, statistics, inflation, trends, household, income",
+    "suggested_file_path": "economic_reports/consumer-price-index-2020.pdf"
+  }
 }

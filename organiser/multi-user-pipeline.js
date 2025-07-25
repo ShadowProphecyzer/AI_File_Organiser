@@ -29,10 +29,10 @@ async function initializeUserDirectories(userId) {
         await fs.mkdir(userPaths.QUEUE_FOLDER, { recursive: true });
         await fs.mkdir(userPaths.CONTEXT_FOLDER, { recursive: true });
         await fs.mkdir(userPaths.ORGANIZED_FOLDER, { recursive: true });
-        console.log(`User directories initialized for: ${userId}`);
+        // console.log(`User directories initialized for: ${userId}`);
         return true;
     } catch (error) {
-        console.error(`Failed to initialize directories for user ${userId}:`, error);
+        // console.error(`Failed to initialize directories for user ${userId}:`, error);
         throw error;
     }
 }
@@ -77,15 +77,14 @@ async function extractToContext(userId) {
 
   // Read or initialize context
   let context = {};
-  try {
-    const raw = await fs.readFile(contextFile, 'utf-8');
+  console.log(`[CONTEXT] Reading context file for user: ${userId}`);
+  const raw = await fs.readFile(contextFile, 'utf-8').catch(() => null);
+  if (raw) {
     context = JSON.parse(raw);
-  } catch (e) {
+  } else {
     context.instructions = [];
   }
-  // Always set the user field
   context.user = userId;
-  // Ensure instructions array is present and updated
   const baseInstructions = [
     "For file organisation, you as an AI can use ONLY the following bash commands:",
     "1. Make a directory: mkdir <directory>",
@@ -93,61 +92,40 @@ async function extractToContext(userId) {
     "3. Delete file/directory: rm <file_or_directory>",
     "4. Move file: mv <source> <destination>",
     `5. Every command must start with: cd users/${userId}/organized (all file operations must be performed from inside this directory)` ,
-    "6. Try to suggest file paths in similar locations as previous files if possible. ",
+    "6. Try to suggest file paths in similar locations as previous files based on below context wherever possible.",
     "Always output only the bash commands needed, nothing else."
   ];
   context.instructions = baseInstructions;
 
-  let files;
+  console.log(`[CONTEXT] Reading organized directory for user: ${userId}`);
+  const files = await fs.readdir(organizedDir);
   const processedFiles = new Set();
-  try {
-    files = await fs.readdir(organizedDir);
-  } catch (e) {
-    console.error(`No organized directory for user ${userId}`);
-    return;
-  }
   for (const file of files) {
     if (!file.endsWith('.json')) continue;
     if (processedFiles.has(file)) continue;
     processedFiles.add(file);
     const filePath = path.join(organizedDir, file);
-    try {
-      const raw = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(raw);
-      // Use base name (remove .pdf.json or .json)
-      const base = file.replace(/\.pdf\.json$/i, '').replace(/\.json$/i, '');
-      context[base] = {
-        file_name: data.file_name,
-        description: data.description,
-        tags: data.tags,
-        suggested_file_path: data.suggested_file_path
-      };
-      // Run bash_command if present
-      if (typeof data.bash_command === 'string' && data.bash_command.trim()) {
-        console.log(`[${userId}] Running bash command for ${file} in shell (bash): ${data.bash_command}`);
-        await new Promise((resolve) => {
-          require('child_process').exec(data.bash_command, { cwd: path.join(__dirname, '..'), shell: (os.platform() === 'win32' ? 'bash' : '/bin/bash') }, (error, stdout, stderr) => {
-            if (error) {
-              console.error(`[${userId}] Error running bash command for ${file}:`, error.message);
-            }
-            if (stdout) console.log(`[${userId}] Bash output for ${file}:`, stdout.trim());
-            if (stderr) console.error(`[${userId}] Bash error output for ${file}:`, stderr.trim());
-            resolve();
-          });
-        });
-      }
-      // (Optional) Do not delete the processed .json file for now
-    } catch (e) {
-      console.error(`Failed to process ${file}:`, e.message);
+    console.log(`[CONTEXT] Processing file: ${file}`);
+    const raw = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(raw);
+    const base = file.replace(/\.pdf\.json$/i, '').replace(/\.json$/i, '');
+    context[base] = {
+      file_name: data.file_name,
+      description: data.description,
+      tags: data.tags,
+      suggested_file_path: data.suggested_file_path
+    };
+    if (typeof data.bash_command === 'string' && data.bash_command.trim()) {
+      console.log(`[CONTEXT] Running bash command for file: ${file}`);
+      await new Promise((resolve) => {
+        require('child_process').exec(data.bash_command, { cwd: path.join(__dirname, '..'), shell: (os.platform() === 'win32' ? 'bash' : '/bin/bash') }, () => resolve());
+      });
     }
+    // console.log(`[CONTEXT] Deleting processed file: ${file}`);
+    // await fs.unlink(filePath);
   }
-  // Save context back to file
-  try {
-    await fs.writeFile(contextFile, JSON.stringify(context, null, 2));
-    console.log(`[${userId}] Context saved to ${contextFile}`);
-  } catch (e) {
-    console.error(`[${userId}] Failed to save context to ${contextFile}:`, e.message);
-  }
+  console.log(`[CONTEXT] Saving updated context for user: ${userId}`);
+  await fs.writeFile(contextFile, JSON.stringify(context, null, 2));
 }
 
 // --- Main pipeline logic: OpenAI text-only ---
@@ -165,7 +143,7 @@ async function runPipeline(userId) {
             throw new Error('Prompt in prompt.txt is empty');
         }
     } catch (err) {
-        console.error(`[PIPELINE] Failed to read prompt.txt:`, err);
+        // console.error(`[PIPELINE] Failed to read prompt.txt:`, err);
         throw err;
     }
     try {
@@ -183,7 +161,7 @@ async function runPipeline(userId) {
         if (queueFiles.length === 0) {
             currentFileNameData.current_system_file_name = "";
             await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
-            console.log(`[PIPELINE] No files to process for user: ${userId}`);
+            // console.log(`[PIPELINE] No files to process for user: ${userId}`);
             return;
         }
         // Read and chunk all context files for the user, include as system messages
@@ -203,26 +181,24 @@ async function runPipeline(userId) {
                 }
             }
         } catch (ctxErr) {
-            console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
+            // console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
         }
         // Add the prompt as the first system message
         contextMessages.unshift({ role: 'system', content: prompt });
-        console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
+        // console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
         // Only process the first file in the queue
         if (queueFiles.length > 0) {
             const fileName = queueFiles[0];
             // Update current_system_file_name before processing this file
             currentFileNameData.current_system_file_name = fileName;
             await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
-            // Wait 2 seconds before sending to AI
-            await new Promise(resolve => setTimeout(resolve, 2000));
             const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
             const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
             try {
                 const ext = fileName.split('.').pop().toLowerCase();
                 const text = await extractTextFromFile(sourceFile, ext);
                 if (!text) {
-                    console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
+                    // console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
                 } else {
                     const chunks = chunkText(text);
                     let allOutputs = [];
@@ -253,7 +229,7 @@ async function runPipeline(userId) {
                                 rateLimited = true;
                                 for (let i = 15; i > 0; i--) {
                                     if (i % 5 === 0 || i === 15) {
-                                        console.log(`Halting process for 15 seconds due to over processing... ${i} seconds remaining...`);
+                                        // console.log(`Halting process for 15 seconds due to over processing... ${i} seconds remaining...`);
                                     }
                                     await new Promise(resolve => setTimeout(resolve, 1000));
                                 }
@@ -289,7 +265,7 @@ async function runPipeline(userId) {
                             const parsed = JSON.parse(raw);
                             outputToWrite = JSON.stringify(parsed, null, 2);
                         } catch (err) {
-                            console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
+                            // console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
                             outputToWrite = raw;
                         }
                     } else {
@@ -330,16 +306,16 @@ async function runPipeline(userId) {
                     const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
                     await fs.writeFile(outputFile, outputToWrite, 'utf-8');
                     await fs.rename(sourceFile, targetFile);
-                    console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
+                    // console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
                 }
             } catch (fileError) {
-                console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
+                // console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
             }
         }
-        console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
+        // console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
         return;
     } catch (error) {
-        console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
+        // console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
         throw error;
     }
 }
@@ -350,7 +326,7 @@ async function runPipelineAndExtract(userId) {
     try {
         queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
     } catch (e) {
-        console.log(`[PIPELINE] No queue folder for user: ${userId}`);
+        // console.log(`[PIPELINE] No queue folder for user: ${userId}`);
         return;
     }
     for (const fileName of queueFiles) {
@@ -359,7 +335,7 @@ async function runPipelineAndExtract(userId) {
         // Run extract_organized_to_context.js and wait for it to finish
         await extractToContext(userId);
         // Wait 30 seconds
-        console.log(`[PIPELINE] Waiting 30 seconds before processing next file for user: ${userId}`);
+        // console.log(`[PIPELINE] Waiting 30 seconds before processing next file for user: ${userId}`);
         await new Promise(resolve => setTimeout(resolve, 30000));
     }
 }
@@ -370,7 +346,6 @@ async function runPipelineForSingleFile(userId, fileName) {
         throw new Error('Valid user ID is required');
     }
     const userPaths = getUserPaths(userId);
-    // Read the prompt from prompt.txt in the same directory as this file
     let prompt;
     try {
         const promptPath = path.join(__dirname, 'prompt.txt');
@@ -379,35 +354,35 @@ async function runPipelineForSingleFile(userId, fileName) {
             throw new Error('Prompt in prompt.txt is empty');
         }
     } catch (err) {
-        console.error(`[PIPELINE] Failed to read prompt.txt:`, err);
         throw err;
     }
     try {
         const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
-        // Update current_system_file_name in current_file_name.json before processing
+        // Only process the fileName passed to this function
+        if (!queueFiles.includes(fileName)) {
+            return;
+        }
+        // Update current_system_file_name in current_file_name.json BEFORE any AI processing
         const currentFileNamePath = path.join(userPaths.CONTEXT_FOLDER, 'current_file_name.json');
         let currentFileNameData = {};
         try {
             const currentFileNameRaw = await fs.readFile(currentFileNamePath, 'utf-8');
             currentFileNameData = JSON.parse(currentFileNameRaw);
         } catch (e) {
-            // If file doesn't exist or is invalid, start fresh
             currentFileNameData = {};
         }
-        if (queueFiles.length === 0) {
-            currentFileNameData.current_system_file_name = "";
-            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
-            console.log(`[PIPELINE] No files to process for user: ${userId}`);
-            return;
-        }
-        // Read and chunk all context files for the user, include as system messages
+        currentFileNameData.current_system_file_name = fileName;
+        // Optionally, add file type if needed (e.g., extension)
+        currentFileNameData.current_system_file_type = fileName.split('.').pop().toLowerCase();
+        await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
+        console.log(`[PIPELINE] Updated current_file_name.json with file: ${fileName}`);
+        // Now proceed to AI processing and the rest of the pipeline
         let contextMessages = [];
         try {
             const contextFiles = await fs.readdir(userPaths.CONTEXT_FOLDER);
             for (const ctxFile of contextFiles) {
                 const ctxPath = path.join(userPaths.CONTEXT_FOLDER, ctxFile);
                 let ctxContent = await fs.readFile(ctxPath, 'utf-8');
-                // Chunk context file if large
                 const ctxChunks = chunkText(ctxContent);
                 for (let i = 0; i < ctxChunks.length; i++) {
                     contextMessages.push({
@@ -416,39 +391,46 @@ async function runPipelineForSingleFile(userId, fileName) {
                     });
                 }
             }
-        } catch (ctxErr) {
-            console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
-        }
-        // Add the prompt as the first system message
+        } catch (ctxErr) {}
         contextMessages.unshift({ role: 'system', content: prompt });
-        console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
-        // Only process the first file in the queue
-        if (queueFiles.length > 0) {
-            const fileName = queueFiles[0];
-            // Update current_system_file_name before processing this file
-            currentFileNameData.current_system_file_name = fileName;
-            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
-            // Wait 2 seconds before sending to AI
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
-            const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
-            try {
-                const ext = fileName.split('.').pop().toLowerCase();
-                const text = await extractTextFromFile(sourceFile, ext);
-                if (!text) {
-                    console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
-                } else {
-                    const chunks = chunkText(text);
-                    let allOutputs = [];
-                    for (const chunk of chunks) {
-                        // Compose messages: prompt, all context chunks, then user chunk
-                        const messages = [
-                            ...contextMessages,
-                            { role: 'user', content: chunk }
-                        ];
-                        let response;
-                        let rateLimited = false;
-                        try {
+        if (!queueFiles.includes(fileName)) {
+            return;
+        }
+        currentFileNameData.current_system_file_name = fileName;
+        await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
+        const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
+        const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
+        try {
+            const ext = fileName.split('.').pop().toLowerCase();
+            const text = await extractTextFromFile(sourceFile, ext);
+            if (text) {
+                const chunks = chunkText(text);
+                let allOutputs = [];
+                for (const chunk of chunks) {
+                    const messages = [
+                        ...contextMessages,
+                        { role: 'user', content: chunk }
+                    ];
+                    let response;
+                    try {
+                        response = await axios.post(
+                            process.env.AI_COMPLETION_URL,
+                            {
+                                model: process.env.AI_MODEL,
+                                messages
+                            },
+                            {
+                                headers: {
+                                    'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                    } catch (err) {
+                        if (err.response && err.response.status === 429) {
+                            for (let i = 15; i > 0; i--) {
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                            }
                             response = await axios.post(
                                 process.env.AI_COMPLETION_URL,
                                 {
@@ -462,98 +444,64 @@ async function runPipelineForSingleFile(userId, fileName) {
                                     }
                                 }
                             );
-                        } catch (err) {
-                            if (err.response && err.response.status === 429) {
-                                rateLimited = true;
-                                for (let i = 15; i > 0; i--) {
-                                    if (i % 5 === 0 || i === 15) {
-                                        console.log(`Halting process for 15 seconds due to over processing... ${i} seconds remaining...`);
-                                    }
-                                    await new Promise(resolve => setTimeout(resolve, 1000));
-                                }
-                                // After waiting, retry once
-                                response = await axios.post(
-                                    process.env.AI_COMPLETION_URL,
-                                    {
-                                        model: process.env.AI_MODEL,
-                                        messages
-                                    },
-                                    {
-                                        headers: {
-                                            'Authorization': `Bearer ${process.env.AI_API_KEY}`,
-                                            'Content-Type': 'application/json'
-                                        }
-                                    }
-                                );
-                            } else {
-                                throw err;
-                            }
+                        } else {
+                            throw err;
                         }
-                        allOutputs.push(response.data.choices[0].message.content);
-                        // Wait 2 seconds before processing the next chunk or file
-                        await new Promise(resolve => setTimeout(resolve, 2000));
                     }
-                    // --- PRETTY JSON OUTPUT HANDLING ---
-                    let outputToWrite;
-                    if (allOutputs.length === 1) {
-                        let raw = allOutputs[0];
+                    allOutputs.push(response.data.choices[0].message.content);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                let outputToWrite;
+                if (allOutputs.length === 1) {
+                    let raw = allOutputs[0];
+                    try {
+                        raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                        raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                        const parsed = JSON.parse(raw);
+                        outputToWrite = JSON.stringify(parsed, null, 2);
+                    } catch (err) {
+                        outputToWrite = raw;
+                    }
+                } else {
+                    let merged = {
+                        file_name: fileName,
+                        description: "",
+                        tags: [],
+                        suggested_file_path: "",
+                        bash_command: ""
+                    };
+                    let tagsSet = new Set();
+                    for (let i = 0; i < allOutputs.length; i++) {
+                        let raw = allOutputs[i];
                         try {
                             raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
                             raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
                             const parsed = JSON.parse(raw);
-                            outputToWrite = JSON.stringify(parsed, null, 2);
-                        } catch (err) {
-                            console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
-                            outputToWrite = raw;
-                        }
-                    } else {
-                        let merged = {
-                            file_name: fileName,
-                            description: "",
-                            tags: [],
-                            suggested_file_path: "",
-                            bash_command: ""
-                        };
-                        let tagsSet = new Set();
-                        for (let i = 0; i < allOutputs.length; i++) {
-                            let raw = allOutputs[i];
-                            try {
-                                raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
-                                raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
-                                const parsed = JSON.parse(raw);
-                                if (parsed.description && merged.description.length < 500) {
-                                    merged.description += (merged.description ? " " : "") + parsed.description;
-                                }
-                                if (parsed.tags) {
-                                    let tagsArr = Array.isArray(parsed.tags) ? parsed.tags : parsed.tags.split(',');
-                                    tagsArr.map(t => t.trim()).forEach(t => { if (t) tagsSet.add(t); });
-                                }
-                                if (!merged.suggested_file_path && parsed.suggested_file_path) {
-                                    merged.suggested_file_path = parsed.suggested_file_path;
-                                }
-                                if (!merged.bash_command && parsed.bash_command) {
-                                    merged.bash_command = parsed.bash_command;
-                                }
-                            } catch (err) {
-                                // Ignore parse errors for individual chunks
+                            if (parsed.description && merged.description.length < 500) {
+                                merged.description += (merged.description ? " " : "") + parsed.description;
                             }
-                        }
-                        merged.tags = Array.from(tagsSet).join(', ');
-                        outputToWrite = JSON.stringify(merged, null, 2);
+                            if (parsed.tags) {
+                                let tagsArr = Array.isArray(parsed.tags) ? parsed.tags : parsed.tags.split(',');
+                                tagsArr.map(t => t.trim()).forEach(t => { if (t) tagsSet.add(t); });
+                            }
+                            if (!merged.suggested_file_path && parsed.suggested_file_path) {
+                                merged.suggested_file_path = parsed.suggested_file_path;
+                            }
+                            if (!merged.bash_command && parsed.bash_command) {
+                                merged.bash_command = parsed.bash_command;
+                            }
+                        } catch (err) {}
                     }
-                    const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
-                    await fs.writeFile(outputFile, outputToWrite, 'utf-8');
-                    await fs.rename(sourceFile, targetFile);
-                    console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
+                    merged.tags = Array.from(tagsSet).join(', ');
+                    outputToWrite = JSON.stringify(merged, null, 2);
                 }
-            } catch (fileError) {
-                console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
+                const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
+                await fs.writeFile(outputFile, outputToWrite, 'utf-8');
+                await fs.rename(sourceFile, targetFile);
             }
-        }
-        console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
+        } catch (fileError) {}
         return;
     } catch (error) {
-        console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
         throw error;
     }
 }
@@ -572,9 +520,9 @@ class MultiUserPipelineManager {
     async initialize() {
         try {
             await fs.mkdir(this.usersDirectory, { recursive: true });
-            console.log('[INIT] Multi-user pipeline manager initialized');
+            // console.log('[INIT] Multi-user pipeline manager initialized');
         } catch (error) {
-            console.error('[INIT] Failed to initialize multi-user pipeline manager:', error);
+            // console.error('[INIT] Failed to initialize multi-user pipeline manager:', error);
             throw error;
         }
     }
@@ -586,10 +534,10 @@ class MultiUserPipelineManager {
         try {
             const entries = await fs.readdir(this.usersDirectory, { withFileTypes: true });
             const users = entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
-            console.log(`[SCAN] Found users: ${users.join(', ')}`);
+            // console.log(`[SCAN] Found users: ${users.join(', ')}`);
             return users;
         } catch (error) {
-            console.error('[SCAN] Error reading users directory:', error);
+            // console.error('[SCAN] Error reading users directory:', error);
             return [];
         }
     }
@@ -601,7 +549,7 @@ class MultiUserPipelineManager {
         try {
             const userPaths = getUserPaths(userId);
             const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
-            console.log(`[QUEUE] User ${userId} has ${queueFiles.length} files in queue`);
+            // console.log(`[QUEUE] User ${userId} has ${queueFiles.length} files in queue`);
             return queueFiles.length > 0;
         } catch (error) {
             return false;
@@ -613,18 +561,18 @@ class MultiUserPipelineManager {
      */
     async processUserFiles(userId) {
         try {
-            console.log(`[PROCESS] Starting processing for user: ${userId}`);
+            // console.log(`[PROCESS] Starting processing for user: ${userId}`);
             await initializeUserDirectories(userId);
             const hasFiles = await this.hasFilesInQueue(userId);
             if (!hasFiles) {
-                console.log(`[PROCESS] No files to process for user: ${userId}`);
+                // console.log(`[PROCESS] No files to process for user: ${userId}`);
                 return;
             }
             await runPipelineAndExtract(userId);
             this.userLastProcessed.set(userId, Date.now());
-            console.log(`[PROCESS] Finished processing for user: ${userId}`);
+            // console.log(`[PROCESS] Finished processing for user: ${userId}`);
         } catch (error) {
-            console.error(`[PROCESS] Error processing files for user ${userId}:`, error);
+            // console.error(`[PROCESS] Error processing files for user ${userId}:`, error);
         }
     }
 
@@ -632,10 +580,10 @@ class MultiUserPipelineManager {
      * Process files for all users
      */
     async processAllUsers() {
-        console.log('[MONITOR] Scanning all users for queued files...');
+        // console.log('[MONITOR] Scanning all users for queued files...');
         const users = await this.getAllUsers();
         if (users.length === 0) {
-            console.log('[MONITOR] No users found. Waiting for users to be created...');
+            // console.log('[MONITOR] No users found. Waiting for users to be created...');
             return;
         }
         for (const userId of users) {
@@ -648,11 +596,11 @@ class MultiUserPipelineManager {
      */
     async startMonitoring() {
         if (this.isRunning) {
-            console.log('Pipeline manager is already running');
+            // console.log('Pipeline manager is already running');
             return;
         }
 
-        console.log('Starting multi-user pipeline monitoring...');
+        // console.log('Starting multi-user pipeline monitoring...');
         this.isRunning = true;
 
         // Initial processing
@@ -661,12 +609,12 @@ class MultiUserPipelineManager {
         // Set up interval for continuous monitoring (every 10 seconds)
         this.monitoringInterval = setInterval(async () => {
             if (this.isRunning) {
-                console.log('[MONITOR] Running automatic processing for all users...');
+                // console.log('[MONITOR] Running automatic processing for all users...');
                 await this.processAllUsers();
             }
         }, 10000);
 
-        console.log('Multi-user pipeline monitoring started (automatic processing every 10 seconds)');
+        // console.log('Multi-user pipeline monitoring started (automatic processing every 10 seconds)');
     }
 
     /**
@@ -674,11 +622,11 @@ class MultiUserPipelineManager {
      */
     stopMonitoring() {
         if (!this.isRunning) {
-            console.log('Pipeline manager is not running');
+            // console.log('Pipeline manager is not running');
             return;
         }
 
-        console.log('Stopping multi-user pipeline monitoring...');
+        // console.log('Stopping multi-user pipeline monitoring...');
         this.isRunning = false;
 
         if (this.monitoringInterval) {
@@ -686,7 +634,7 @@ class MultiUserPipelineManager {
             this.monitoringInterval = null;
         }
 
-        console.log('Multi-user pipeline monitoring stopped');
+        // console.log('Multi-user pipeline monitoring stopped');
     }
 
     /**
@@ -698,7 +646,7 @@ class MultiUserPipelineManager {
         }
 
         try {
-            console.log(`Creating user directory structure for: ${userId}`);
+            // console.log(`Creating user directory structure for: ${userId}`);
             await initializeUserDirectories(userId);
             // Create <username>_context.json in the context folder with prefilled text
             const userPaths = getUserPaths(userId);
@@ -718,11 +666,11 @@ class MultiUserPipelineManager {
             const newContextFilePath = path.join(userPaths.CONTEXT_FOLDER, 'current_file_name.json');
             const newContextContent = { "current_system_file_name": "" };
             await fs.writeFile(newContextFilePath, JSON.stringify(newContextContent, null, 2), 'utf-8');
-            console.log(`Context file created for user: ${userId}`);
-            console.log(`User ${userId} created successfully`);
+            // console.log(`Context file created for user: ${userId}`);
+            // console.log(`User ${userId} created successfully`);
             return true;
         } catch (error) {
-            console.error(`Failed to create user ${userId}:`, error);
+            // console.error(`Failed to create user ${userId}:`, error);
             throw error;
         }
     }
@@ -756,7 +704,7 @@ class MultiUserPipelineManager {
 
             return stats;
         } catch (error) {
-            console.error(`Error getting stats for user ${userId}:`, error);
+            // console.error(`Error getting stats for user ${userId}:`, error);
             return null;
         }
     }
@@ -798,13 +746,13 @@ if (require.main === module) {
             
             // Handle graceful shutdown
             process.on('SIGINT', () => {
-                console.log('\nReceived SIGINT, shutting down gracefully...');
+                // console.log('\nReceived SIGINT, shutting down gracefully...');
                 manager.stopMonitoring();
                 process.exit(0);
             });
             
         } catch (error) {
-            console.error('Failed to start multi-user pipeline manager:', error);
+            // console.error('Failed to start multi-user pipeline manager:', error);
             process.exit(1);
         }
     })();
