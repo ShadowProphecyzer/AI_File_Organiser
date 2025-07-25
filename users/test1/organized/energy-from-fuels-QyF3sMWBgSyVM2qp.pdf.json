@@ -1,7 +1,0 @@
-{
-  "file_name": "energy-from-fuels-QyF3sMWBgSyVM2qp.pdf",
-  "description": "IBDP chemistry questions on energy from fuels, including combustion reactions, fuel cells, and greenhouse gases.",
-  "tags": "chemistry, energy, fuels, combustion, carbon, dioxide, greenhouse, biofuels, cells, hydrocarbons, alkanes, methanol, bioethanol, equations, climate, change, reactions, oxidation, reduction, exam, questions, IBDP, hydrocarbons, isooctane, tetradecane, hydrogen, oxygen, experiments, calorimetry, efficiency, environment, biofuel, hydrogen, global, warming",
-  "suggested_file_path": "educational_materials/chemistry/energy-from-fuels-QyF3sMWBgSyVM2qp.pdf",
-  "bash_command": "cd users/test1/organized && mkdir -p educational_materials/chemistry && mv energy-from-fuels-QyF3sMWBgSyVM2qp.pdf educational_materials/chemistry/"
-}

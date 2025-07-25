@@ -1,7 +1,0 @@
-{
-  "file_name": "how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM.pdf",
-  "description": "Structured questions on chemical equilibrium concepts, including Le Chatelier's Principle, equilibrium constants, and Gibbs energy for IBDP exams. Examination questions on chemical equilibrium, tract reactions, and equilibrium constant calculations.",
-  "tags": "chemistry, equilibrium, dynamic, constant, reaction, quotient, lechateliers, principle, gibbs, energy, enthalpy, synthesis, ammonia, esterification, nitrogen, halogens, temperature, pressure, catalyst, endothermic, exothermic, questions, IBDP, exams, kinetic, medium, hard, structured, challenge, equilibria, law, concentration, K, moles, chemical, container, position, decomposition, effect, reactants, products, equilibriumconstant, SO3, mol, dm, expression, hydrogen, ethanol, ethanoic, acid, water, ethyl, volume, mixture, SO2, experiments, calculation, carbon, structures, diagrams, graphs",
-  "suggested_file_path": "educational_materials/chemistry/how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM.pdf",
-  "bash_command": "cd users/test1/organized && mkdir -p educational_materials/chemistry && mv how-far-the-extent-of-chemical-change-bBkNCDQkQWHJZNnM.pdf educational_materials/chemistry/"
-}
