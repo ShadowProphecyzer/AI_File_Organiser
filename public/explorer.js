@@ -44,14 +44,6 @@ function navigateTo(dir) {
   currentDir = dir;
 }
 
-function goBack() {
-  if (dirHistory.length > 0) {
-    const prev = dirHistory.pop();
-    fetchExplorer(prev);
-    currentDir = prev;
-  }
-}
-
 function renderExplorer(data, filter = '', dir = '') {
   renderBreadcrumb(dir);
   explorerList.innerHTML = '';
@@ -103,16 +95,11 @@ async function fetchExplorer(dir = '') {
 
 window.addEventListener('DOMContentLoaded', () => {
   console.log('[explorer.js] DOMContentLoaded');
-  // Add breadcrumb and back button
+  // Add breadcrumb only (removed back button)
   const container = document.querySelector('.explorer-container');
   const breadcrumb = document.createElement('div');
   breadcrumb.id = 'breadcrumb';
   breadcrumb.className = 'mb-4 text-sm';
   container.insertBefore(breadcrumb, searchBar);
-  const backBtn = document.createElement('button');
-  backBtn.textContent = 'Back';
-  backBtn.className = 'mb-4 px-4 py-1 rounded bg-gray-200 text-black border border-gray-400 hover:bg-yellow-100 mr-4';
-  backBtn.onclick = goBack;
-  container.insertBefore(backBtn, breadcrumb);
   fetchExplorer();
 });

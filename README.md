@@ -54,12 +54,14 @@ Users interact with AI_File_Organiser via their browser over HTTPS:
 2. Log in or sign up (if user authentication is enabled).
 3. Upload text-based files (e.g. .pdf, .docx, .txt).
 4. View automatically organised files in their respective folders.
+5. **Download files:** Click on any file in the explorer to download it directly to your device.
 
 Features
 --------
 - Automatic Categorisation: Organises uploaded files into appropriate folders based on content.
 - Multi-User Support: Handles separate file spaces and organisation for each user.
 - Supports Multiple Text-Based File Types: Not limited to .txt files; supports PDFs, DOCX, and similar formats.
+- **File Download:** Users can download any of their files by clicking on them in the explorer interface.
 
 Example Screenshots
 -------------------

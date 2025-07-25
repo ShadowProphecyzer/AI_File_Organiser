@@ -267,14 +267,20 @@ app.get('/api/files', authenticate, (req, res) => {
   });
 });
 
-// Download file
-app.get('/api/download', authenticate, (req, res) => {
-  const user = req.user;
+// Download file from user's directory
+app.get('/api/download', requireLogin, (req, res) => {
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ message: 'Unauthorized' });
   const filePath = req.query.path;
-  const absPath = path.join(USER_DATA_ROOT, user, filePath);
-
-  if (!absPath.startsWith(path.join(USER_DATA_ROOT, user))) {
+  if (!filePath) return res.status(400).json({ message: 'No file specified' });
+  const userRoot = path.join(__dirname, '../users', user.name);
+  const absPath = path.join(userRoot, filePath);
+  // Prevent path traversal
+  if (!absPath.startsWith(userRoot)) {
     return res.status(403).send('Forbidden');
+  }
+  if (!fs.existsSync(absPath) || !fs.statSync(absPath).isFile()) {
+    return res.status(404).json({ message: 'File not found' });
   }
   res.download(absPath);
 });
