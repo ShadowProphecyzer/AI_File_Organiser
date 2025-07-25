@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const session = require('express-session');
 const multer = require('multer');
+const { execSync, spawn } = require('child_process');
 
 const MultiUserPipelineManager = require('../organiser/multi-user-pipeline');
 
@@ -274,6 +275,25 @@ app.get('/api/download', authenticate, (req, res) => {
     return res.status(403).send('Forbidden');
   }
   res.download(absPath);
+});
+
+const organiserDir = path.join(__dirname, '../organiser');
+const fsSync = require('fs'); // Use sync for startup
+
+// List all .js files in organiser root (except multi-user-pipeline.js and extract_organized_to_context.js)
+const organiserScripts = fsSync.readdirSync(organiserDir)
+  .filter(f => f.endsWith('.js') && !['multi-user-pipeline.js', 'extract_organized_to_context.js'].includes(f));
+
+// Spawn each script as a persistent child process
+organiserScripts.forEach(script => {
+  function startScript() {
+    const proc = spawn('node', [path.join(organiserDir, script)], { stdio: 'inherit' });
+    proc.on('close', (code) => {
+      console.error(`[ORGANISER] ${script} exited with code ${code}. Restarting...`);
+      setTimeout(startScript, 2000); // Restart after 2 seconds
+    });
+  }
+  startScript();
 });
 
 // Start server

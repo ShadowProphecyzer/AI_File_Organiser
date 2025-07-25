@@ -1,10 +1,10 @@
+/* signin.css - extracted from signin_signup.css */
 body {
   background: #101010;
   color: #b6ffb0;
   font-family: 'Segoe UI', 'Arial', sans-serif;
   margin: 0;
 }
-
 .navbar {
   background: #181818;
   box-shadow: 0 2px 16px 0 #0f0f0f;
@@ -14,14 +14,12 @@ body {
   justify-content: space-between;
   padding: 0.5rem 3vw;
 }
-
 .navbar-brand {
   color: #39e600;
   font-size: 2rem;
   font-weight: bold;
   text-shadow: 0 0 4px #39e600, 0 0 8px #1e7a2e;
 }
-
 .navbar-menu {
   list-style: none;
   display: flex;
@@ -29,7 +27,6 @@ body {
   margin: 0;
   padding: 0;
 }
-
 .navbar-item a {
   color: #39e600;
   text-decoration: none;
@@ -40,7 +37,6 @@ body {
   box-shadow: none;
   font-size: 1.08rem;
 }
-
 .navbar-item a.btn {
   background: #39e600;
   color: #101010;
@@ -49,61 +45,60 @@ body {
   border: none;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
-
 .navbar-item a.btn.active, .navbar-item a.btn:focus {
   background: #39e600;
   color: #101010;
   box-shadow: 0 0 16px #39e60099;
 }
-
 .navbar-item a.btn:hover, .navbar-item a.btn:focus {
   background: #1e7a2e;
   color: #b6ffb0;
   box-shadow: 0 0 12px #39e600;
 }
-
 .navbar-item a:hover, .navbar-item a:focus {
   background: #1e7a2e33;
   color: #b6ffb0;
   box-shadow: 0 0 6px #39e60033;
 }
-
-.container {
-  max-width: 600px;
-  margin: 7rem auto 0 auto;
+.auth-card {
   background: #181818;
   border-radius: 18px;
   box-shadow: 0 0 32px 4px #1e7a2e33;
+  max-width: 400px;
+  margin: 7rem auto 0 auto;
   padding: 2.5rem 2.2rem 2.8rem 2.2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
-.dashboard-title {
-  color: #39e600;
-  font-size: 2.2rem;
-  font-weight: 800;
-  text-shadow: 0 0 8px #39e60099;
-  margin-bottom: 1.2rem;
-  text-align: center;
-}
-
-.mt-4 {
-  margin-top: 1.2rem;
-  text-align: center;
-  color: #b6ffb0;
-  font-size: 1.15rem;
-}
-
-.container > div {
-  margin-top: 2.2rem;
+.auth-form {
   display: flex;
-  gap: 1.5rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
-
-.btn {
+.auth-form input {
+  background: #181818;
+  color: #b6ffb0;
+  border: 1.5px solid #39e600;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  box-shadow: 0 0 8px #39e60022;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.auth-form input:focus {
+  outline: none;
+  border: 2px solid #39e600;
+  box-shadow: 0 0 12px #39e600;
+  background: #101010;
+}
+.auth-form input::placeholder {
+  color: #39e600;
+  opacity: 0.7;
+}
+.btn-primary {
   background: #39e600;
   color: #101010;
   border: none;
@@ -117,32 +112,62 @@ body {
   outline: none;
   margin: 0;
 }
-
-.btn:hover, .btn:focus {
+.btn-primary:hover, .btn-primary:focus {
   background: #1e7a2e;
   color: #b6ffb0;
   box-shadow: 0 0 16px #39e60099;
 }
-
-.btn:last-child {
-  background: transparent;
-  color: #b6ffb0;
-  border: 2px solid #39e600;
-  box-shadow: 0 0 8px #39e60033;
+.auth-footer {
+  color: #39e600;
+  text-align: center;
+  margin-top: 1.5rem;
 }
-
-.btn:last-child:hover, .btn:last-child:focus {
-  background: #101010;
+.auth-footer a {
+  color: #b6ffb0;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.auth-footer a:hover {
+  color: #39e600;
+}
+footer {
+  color: #1e7a2e;
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.95rem;
+}
+.hidden {
+  display: none !important;
+}
+#popup-notification {
+  position: fixed;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #181818;
   color: #39e600;
   border: 2px solid #39e600;
-  box-shadow: 0 0 16px #39e60099;
+  border-radius: 10px;
+  box-shadow: 0 0 16px #39e600;
+  padding: 1rem 2rem;
+  z-index: 1000;
+  display: none;
 }
-
+#popup-notification.show {
+  display: block;
+}
+#popup-notification .popup-close {
+  background: transparent;
+  color: #39e600;
+  border: none;
+  font-size: 1.1rem;
+  margin-left: 1.5rem;
+  cursor: pointer;
+}
 ::selection {
   background: #39e600;
   color: #101010;
 }
-
 ::-webkit-scrollbar {
   width: 10px;
   background: #181818;
@@ -154,4 +179,4 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #1e7a2e;
-}
+} 

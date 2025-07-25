@@ -2,6 +2,7 @@
 
 // Navbar background change on scroll
 window.addEventListener('scroll', () => {
+  console.log('[dashboard.js] Scroll event');
   const navbar = document.getElementById('navbar');
   if (navbar) {
     if (window.scrollY > 50) {
@@ -14,19 +15,20 @@ window.addEventListener('scroll', () => {
 
 // Real auth check using backend session
 window.addEventListener('DOMContentLoaded', async () => {
+  console.log('[dashboard.js] DOMContentLoaded');
   console.log('⬛ [System] Checking authentication status...');
   try {
     const res = await fetch('/api/dashboard');
     if (res.status === 401) {
       console.log('⬛ [System] User not authenticated, redirecting to sign in.');
-      window.location.href = 'signin_signup.html#signin-section';
+      window.location.href = 'signin.html';
     } else {
       const data = await res.json();
       console.log('⬛ [System] User authenticated:', data);
     }
   } catch (err) {
     console.log('⬛ [System] Error checking authentication:', err);
-    window.location.href = 'signin_signup.html#signin-section';
+    window.location.href = 'signin.html';
   }
 });
 
@@ -63,12 +65,14 @@ if (document.getElementById('popup-close')) {
 
 // Make the upload button open the file picker
 uploadBtn.addEventListener('click', () => {
+  console.log('[dashboard.js] Upload button clicked');
   fileInput.click();
   console.log('⬛ [User] Clicked Choose from computer (opens file picker)');
 });
 
 // When a file is selected, show the name and upload immediately
 fileInput.addEventListener('change', () => {
+  console.log('[dashboard.js] File input changed');
   const fileNameSpan = document.getElementById('selected-file-name');
   if (fileInput.files.length) {
     let validFiles = [];

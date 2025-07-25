@@ -1,0 +1,13 @@
+{
+  "instructions": [
+    "For file organisation, you as an AI can use ONLY the following bash commands:",
+    "1. Make a directory: mkdir <directory>",
+    "2. Enter directory: cd <directory>",
+    "3. Delete file/directory: rm <file_or_directory>",
+    "4. Move file: mv <source> <destination>",
+    "5. Every command must start with: cd users/test1/organized (all file operations must be performed from inside this directory)",
+    "6. Try to suggest file paths in similar locations as previous files if possible. ",
+    "Always output only the bash commands needed, nothing else."
+  ],
+  "user": "test1"
+}

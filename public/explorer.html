@@ -4,32 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>File Explorer - AI File Organiser</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="dashboard.css" />
   <link rel="stylesheet" href="explorer.css" />
   <script defer src="explorer.js"></script>
 </head>
-<body class="bg-white text-black min-h-screen">
-  <!-- Navbar -->
-  <nav id="navbar" class="flex justify-between items-center px-8 py-4 fixed w-full top-0 bg-white transition duration-300 z-50 border-b border-gray-200">
-    <div class="text-2xl font-bold bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
-      AI File Organiser
-    </div>
-    <div class="flex-1 flex justify-center">
-      <ul class="flex space-x-6">
-        <li><a href="contact_us.html" class="hover:text-pink-400 transition">Contact Us</a></li>
-        <li><a href="dashboard.html" class="hover:text-pink-400 transition">Dashboard</a></li>
-      </ul>
-    </div>
-    <div class="flex items-center space-x-4">
-      <input id="dashboard-search-bar" type="text" placeholder="Search..." class="px-4 py-2 rounded bg-gray-100 text-black focus:outline-none focus:ring-2 focus:ring-pink-400" />
-      <a href="signin_signup.html#signin-section" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-2 rounded-full font-semibold hover:opacity-80 transition ml-2">Sign Out</a>
-    </div>
+<body>
+  <nav id="navbar" class="navbar">
+    <div class="navbar-brand text-2xl font-bold animate-gradient">AI File Organiser</div>
+    <ul class="navbar-menu">
+      <li class="navbar-item"><a href="contact_us.html">Contact Us</a></li>
+      <li class="navbar-item"><a href="dashboard.html">Dashboard</a></li>
+      <li class="navbar-item"><a href="features.html">Features</a></li>
+      <li class="navbar-item"><a href="signin.html">Sign In</a></li>
+      <li class="navbar-item"><a href="signup.html" class="btn">Sign Up</a></li>
+    </ul>
   </nav>
-
-  <div class="explorer-container mt-32 mx-auto max-w-3xl p-8 rounded-xl shadow-lg border border-gray-200 bg-gray-50">
-    <h1 class="explorer-title animate-gradient mb-8 text-center">Your Files</h1>
-    <input id="search-bar" type="text" placeholder="Search files and folders..." class="mb-6 w-full px-4 py-2 rounded bg-gray-100 text-black focus:outline-none focus:ring-2 focus:ring-pink-400 border border-gray-300" />
+  <div class="explorer-container container">
+    <h1 class="explorer-title">Your Files</h1>
+    <input id="search-bar" type="text" placeholder="Search files and folders..." />
     <div id="explorer-list" class="explorer-list"></div>
   </div>
 </body>

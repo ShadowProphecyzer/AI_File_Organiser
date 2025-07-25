@@ -102,6 +102,7 @@ async function fetchExplorer(dir = '') {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  console.log('[explorer.js] DOMContentLoaded');
   // Add breadcrumb and back button
   const container = document.querySelector('.explorer-container');
   const breadcrumb = document.createElement('div');

@@ -5,6 +5,8 @@ const axios = require('axios');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { parse: csvParse } = require('csv-parse/sync');
+const { spawn } = require('child_process');
+const os = require('os');
 
 // --- User directory helpers ---
 function getUserPaths(userId) {
@@ -66,6 +68,88 @@ async function extractTextFromFile(filePath, ext) {
     }
 }
 
+// --- Add extractToContext logic directly here ---
+async function extractToContext(userId) {
+  const userDir = path.join(__dirname, '../users', userId);
+  const organizedDir = path.join(userDir, 'organized');
+  const contextDir = path.join(userDir, 'context');
+  const contextFile = path.join(contextDir, `${userId}_context.json`);
+
+  // Read or initialize context
+  let context = {};
+  try {
+    const raw = await fs.readFile(contextFile, 'utf-8');
+    context = JSON.parse(raw);
+  } catch (e) {
+    context.instructions = [];
+  }
+  // Always set the user field
+  context.user = userId;
+  // Ensure instructions array is present and updated
+  const baseInstructions = [
+    "For file organisation, you as an AI can use ONLY the following bash commands:",
+    "1. Make a directory: mkdir <directory>",
+    "2. Enter directory: cd <directory>",
+    "3. Delete file/directory: rm <file_or_directory>",
+    "4. Move file: mv <source> <destination>",
+    `5. Every command must start with: cd users/${userId}/organized (all file operations must be performed from inside this directory)` ,
+    "6. Try to suggest file paths in similar locations as previous files if possible. ",
+    "Always output only the bash commands needed, nothing else."
+  ];
+  context.instructions = baseInstructions;
+
+  let files;
+  const processedFiles = new Set();
+  try {
+    files = await fs.readdir(organizedDir);
+  } catch (e) {
+    console.error(`No organized directory for user ${userId}`);
+    return;
+  }
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue;
+    if (processedFiles.has(file)) continue;
+    processedFiles.add(file);
+    const filePath = path.join(organizedDir, file);
+    try {
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(raw);
+      // Use base name (remove .pdf.json or .json)
+      const base = file.replace(/\.pdf\.json$/i, '').replace(/\.json$/i, '');
+      context[base] = {
+        file_name: data.file_name,
+        description: data.description,
+        tags: data.tags,
+        suggested_file_path: data.suggested_file_path
+      };
+      // Run bash_command if present
+      if (typeof data.bash_command === 'string' && data.bash_command.trim()) {
+        console.log(`[${userId}] Running bash command for ${file} in shell (bash): ${data.bash_command}`);
+        await new Promise((resolve) => {
+          require('child_process').exec(data.bash_command, { cwd: path.join(__dirname, '..'), shell: (os.platform() === 'win32' ? 'bash' : '/bin/bash') }, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`[${userId}] Error running bash command for ${file}:`, error.message);
+            }
+            if (stdout) console.log(`[${userId}] Bash output for ${file}:`, stdout.trim());
+            if (stderr) console.error(`[${userId}] Bash error output for ${file}:`, stderr.trim());
+            resolve();
+          });
+        });
+      }
+      // (Optional) Do not delete the processed .json file for now
+    } catch (e) {
+      console.error(`Failed to process ${file}:`, e.message);
+    }
+  }
+  // Save context back to file
+  try {
+    await fs.writeFile(contextFile, JSON.stringify(context, null, 2));
+    console.log(`[${userId}] Context saved to ${contextFile}`);
+  } catch (e) {
+    console.error(`[${userId}] Failed to save context to ${contextFile}:`, e.message);
+  }
+}
+
 // --- Main pipeline logic: OpenAI text-only ---
 async function runPipeline(userId) {
     if (!userId || typeof userId !== 'string') {
@@ -124,7 +208,9 @@ async function runPipeline(userId) {
         // Add the prompt as the first system message
         contextMessages.unshift({ role: 'system', content: prompt });
         console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
-        for (const fileName of queueFiles) {
+        // Only process the first file in the queue
+        if (queueFiles.length > 0) {
+            const fileName = queueFiles[0];
             // Update current_system_file_name before processing this file
             currentFileNameData.current_system_file_name = fileName;
             await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
@@ -137,75 +223,335 @@ async function runPipeline(userId) {
                 const text = await extractTextFromFile(sourceFile, ext);
                 if (!text) {
                     console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
-                    continue;
-                }
-                const chunks = chunkText(text);
-                let allOutputs = [];
-                for (const chunk of chunks) {
-                    // Compose messages: prompt, all context chunks, then user chunk
-                    const messages = [
-                        ...contextMessages,
-                        { role: 'user', content: chunk }
-                    ];
-                    const response = await axios.post(
-                        process.env.AI_COMPLETION_URL,
-                        {
-                            model: process.env.AI_MODEL,
-                            messages
-                        },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${process.env.AI_API_KEY}`,
-                                'Content-Type': 'application/json'
+                } else {
+                    const chunks = chunkText(text);
+                    let allOutputs = [];
+                    for (const chunk of chunks) {
+                        // Compose messages: prompt, all context chunks, then user chunk
+                        const messages = [
+                            ...contextMessages,
+                            { role: 'user', content: chunk }
+                        ];
+                        let response;
+                        let rateLimited = false;
+                        try {
+                            response = await axios.post(
+                                process.env.AI_COMPLETION_URL,
+                                {
+                                    model: process.env.AI_MODEL,
+                                    messages
+                                },
+                                {
+                                    headers: {
+                                        'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }
+                            );
+                        } catch (err) {
+                            if (err.response && err.response.status === 429) {
+                                rateLimited = true;
+                                for (let i = 15; i > 0; i--) {
+                                    if (i % 5 === 0 || i === 15) {
+                                        console.log(`Halting process for 15 seconds due to over processing... ${i} seconds remaining...`);
+                                    }
+                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                }
+                                // After waiting, retry once
+                                response = await axios.post(
+                                    process.env.AI_COMPLETION_URL,
+                                    {
+                                        model: process.env.AI_MODEL,
+                                        messages
+                                    },
+                                    {
+                                        headers: {
+                                            'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+                                            'Content-Type': 'application/json'
+                                        }
+                                    }
+                                );
+                            } else {
+                                throw err;
                             }
                         }
-                    );
-                    allOutputs.push(response.data.choices[0].message.content);
-                }
-                // --- PRETTY JSON OUTPUT HANDLING ---
-                // If only one output, try to extract and pretty-print the JSON
-                let outputToWrite;
-                if (allOutputs.length === 1) {
-                    let raw = allOutputs[0];
-                    try {
-                        // Remove markdown code block if present
-                        raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
-                        // Remove generic code block if present
-                        raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
-                        // Parse JSON
-                        const parsed = JSON.parse(raw);
-                        outputToWrite = JSON.stringify(parsed, null, 2);
-                    } catch (err) {
-                        console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
-                        outputToWrite = raw;
+                        allOutputs.push(response.data.choices[0].message.content);
+                        // Wait 2 seconds before processing the next chunk or file
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                     }
-                } else {
-                    // Multi-chunk: save as array of pretty-printed JSON objects if possible
-                    let parsedChunks = [];
-                    for (let raw of allOutputs) {
+                    // --- PRETTY JSON OUTPUT HANDLING ---
+                    let outputToWrite;
+                    if (allOutputs.length === 1) {
+                        let raw = allOutputs[0];
                         try {
                             raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
                             raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
-                            parsedChunks.push(JSON.parse(raw));
+                            const parsed = JSON.parse(raw);
+                            outputToWrite = JSON.stringify(parsed, null, 2);
                         } catch (err) {
-                            parsedChunks.push(raw);
+                            console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
+                            outputToWrite = raw;
                         }
+                    } else {
+                        let merged = {
+                            file_name: fileName,
+                            description: "",
+                            tags: [],
+                            suggested_file_path: "",
+                            bash_command: ""
+                        };
+                        let tagsSet = new Set();
+                        for (let i = 0; i < allOutputs.length; i++) {
+                            let raw = allOutputs[i];
+                            try {
+                                raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                                raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                                const parsed = JSON.parse(raw);
+                                if (parsed.description && merged.description.length < 500) {
+                                    merged.description += (merged.description ? " " : "") + parsed.description;
+                                }
+                                if (parsed.tags) {
+                                    let tagsArr = Array.isArray(parsed.tags) ? parsed.tags : parsed.tags.split(',');
+                                    tagsArr.map(t => t.trim()).forEach(t => { if (t) tagsSet.add(t); });
+                                }
+                                if (!merged.suggested_file_path && parsed.suggested_file_path) {
+                                    merged.suggested_file_path = parsed.suggested_file_path;
+                                }
+                                if (!merged.bash_command && parsed.bash_command) {
+                                    merged.bash_command = parsed.bash_command;
+                                }
+                            } catch (err) {
+                                // Ignore parse errors for individual chunks
+                            }
+                        }
+                        merged.tags = Array.from(tagsSet).join(', ');
+                        outputToWrite = JSON.stringify(merged, null, 2);
                     }
-                    try {
-                        outputToWrite = JSON.stringify(parsedChunks, null, 2);
-                    } catch (err) {
-                        outputToWrite = JSON.stringify(allOutputs, null, 2);
-                    }
+                    const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
+                    await fs.writeFile(outputFile, outputToWrite, 'utf-8');
+                    await fs.rename(sourceFile, targetFile);
+                    console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
                 }
-                const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
-                await fs.writeFile(outputFile, outputToWrite, 'utf-8');
-                await fs.rename(sourceFile, targetFile);
-                console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
             } catch (fileError) {
                 console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
             }
         }
         console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
+        return;
+    } catch (error) {
+        console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+async function runPipelineAndExtract(userId) {
+    const userPaths = getUserPaths(userId);
+    let queueFiles;
+    try {
+        queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
+    } catch (e) {
+        console.log(`[PIPELINE] No queue folder for user: ${userId}`);
+        return;
+    }
+    for (const fileName of queueFiles) {
+        // Run pipeline for this file only
+        await runPipelineForSingleFile(userId, fileName);
+        // Run extract_organized_to_context.js and wait for it to finish
+        await extractToContext(userId);
+        // Wait 30 seconds
+        console.log(`[PIPELINE] Waiting 30 seconds before processing next file for user: ${userId}`);
+        await new Promise(resolve => setTimeout(resolve, 30000));
+    }
+}
+
+// Helper to process a single file through the pipeline
+async function runPipelineForSingleFile(userId, fileName) {
+    if (!userId || typeof userId !== 'string') {
+        throw new Error('Valid user ID is required');
+    }
+    const userPaths = getUserPaths(userId);
+    // Read the prompt from prompt.txt in the same directory as this file
+    let prompt;
+    try {
+        const promptPath = path.join(__dirname, 'prompt.txt');
+        prompt = await fs.readFile(promptPath, 'utf-8');
+        if (!prompt.trim()) {
+            throw new Error('Prompt in prompt.txt is empty');
+        }
+    } catch (err) {
+        console.error(`[PIPELINE] Failed to read prompt.txt:`, err);
+        throw err;
+    }
+    try {
+        const queueFiles = await fs.readdir(userPaths.QUEUE_FOLDER);
+        // Update current_system_file_name in current_file_name.json before processing
+        const currentFileNamePath = path.join(userPaths.CONTEXT_FOLDER, 'current_file_name.json');
+        let currentFileNameData = {};
+        try {
+            const currentFileNameRaw = await fs.readFile(currentFileNamePath, 'utf-8');
+            currentFileNameData = JSON.parse(currentFileNameRaw);
+        } catch (e) {
+            // If file doesn't exist or is invalid, start fresh
+            currentFileNameData = {};
+        }
+        if (queueFiles.length === 0) {
+            currentFileNameData.current_system_file_name = "";
+            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
+            console.log(`[PIPELINE] No files to process for user: ${userId}`);
+            return;
+        }
+        // Read and chunk all context files for the user, include as system messages
+        let contextMessages = [];
+        try {
+            const contextFiles = await fs.readdir(userPaths.CONTEXT_FOLDER);
+            for (const ctxFile of contextFiles) {
+                const ctxPath = path.join(userPaths.CONTEXT_FOLDER, ctxFile);
+                let ctxContent = await fs.readFile(ctxPath, 'utf-8');
+                // Chunk context file if large
+                const ctxChunks = chunkText(ctxContent);
+                for (let i = 0; i < ctxChunks.length; i++) {
+                    contextMessages.push({
+                        role: 'system',
+                        content: `[CONTEXT FILE: ${ctxFile}${ctxChunks.length > 1 ? ` (chunk ${i+1}/${ctxChunks.length})` : ''}]:\n` + ctxChunks[i]
+                    });
+                }
+            }
+        } catch (ctxErr) {
+            console.warn(`[PIPELINE] No context files or error reading context for user: ${userId}`, ctxErr);
+        }
+        // Add the prompt as the first system message
+        contextMessages.unshift({ role: 'system', content: prompt });
+        console.log(`[PIPELINE] Processing ${queueFiles.length} files for user: ${userId}`);
+        // Only process the first file in the queue
+        if (queueFiles.length > 0) {
+            const fileName = queueFiles[0];
+            // Update current_system_file_name before processing this file
+            currentFileNameData.current_system_file_name = fileName;
+            await fs.writeFile(currentFileNamePath, JSON.stringify(currentFileNameData, null, 2));
+            // Wait 2 seconds before sending to AI
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const sourceFile = path.join(userPaths.QUEUE_FOLDER, fileName);
+            const targetFile = path.join(userPaths.ORGANIZED_FOLDER, fileName);
+            try {
+                const ext = fileName.split('.').pop().toLowerCase();
+                const text = await extractTextFromFile(sourceFile, ext);
+                if (!text) {
+                    console.warn(`[PIPELINE] Skipping unsupported file type for OpenAI: ${fileName}`);
+                } else {
+                    const chunks = chunkText(text);
+                    let allOutputs = [];
+                    for (const chunk of chunks) {
+                        // Compose messages: prompt, all context chunks, then user chunk
+                        const messages = [
+                            ...contextMessages,
+                            { role: 'user', content: chunk }
+                        ];
+                        let response;
+                        let rateLimited = false;
+                        try {
+                            response = await axios.post(
+                                process.env.AI_COMPLETION_URL,
+                                {
+                                    model: process.env.AI_MODEL,
+                                    messages
+                                },
+                                {
+                                    headers: {
+                                        'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }
+                            );
+                        } catch (err) {
+                            if (err.response && err.response.status === 429) {
+                                rateLimited = true;
+                                for (let i = 15; i > 0; i--) {
+                                    if (i % 5 === 0 || i === 15) {
+                                        console.log(`Halting process for 15 seconds due to over processing... ${i} seconds remaining...`);
+                                    }
+                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                }
+                                // After waiting, retry once
+                                response = await axios.post(
+                                    process.env.AI_COMPLETION_URL,
+                                    {
+                                        model: process.env.AI_MODEL,
+                                        messages
+                                    },
+                                    {
+                                        headers: {
+                                            'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+                                            'Content-Type': 'application/json'
+                                        }
+                                    }
+                                );
+                            } else {
+                                throw err;
+                            }
+                        }
+                        allOutputs.push(response.data.choices[0].message.content);
+                        // Wait 2 seconds before processing the next chunk or file
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                    // --- PRETTY JSON OUTPUT HANDLING ---
+                    let outputToWrite;
+                    if (allOutputs.length === 1) {
+                        let raw = allOutputs[0];
+                        try {
+                            raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                            raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                            const parsed = JSON.parse(raw);
+                            outputToWrite = JSON.stringify(parsed, null, 2);
+                        } catch (err) {
+                            console.error(`[PIPELINE] Failed to parse AI output as JSON. Saving raw output.`, err);
+                            outputToWrite = raw;
+                        }
+                    } else {
+                        let merged = {
+                            file_name: fileName,
+                            description: "",
+                            tags: [],
+                            suggested_file_path: "",
+                            bash_command: ""
+                        };
+                        let tagsSet = new Set();
+                        for (let i = 0; i < allOutputs.length; i++) {
+                            let raw = allOutputs[i];
+                            try {
+                                raw = raw.replace(/^```json[\r\n]+|```$/gim, '').trim();
+                                raw = raw.replace(/^```[\w]*[\r\n]+|```$/gim, '').trim();
+                                const parsed = JSON.parse(raw);
+                                if (parsed.description && merged.description.length < 500) {
+                                    merged.description += (merged.description ? " " : "") + parsed.description;
+                                }
+                                if (parsed.tags) {
+                                    let tagsArr = Array.isArray(parsed.tags) ? parsed.tags : parsed.tags.split(',');
+                                    tagsArr.map(t => t.trim()).forEach(t => { if (t) tagsSet.add(t); });
+                                }
+                                if (!merged.suggested_file_path && parsed.suggested_file_path) {
+                                    merged.suggested_file_path = parsed.suggested_file_path;
+                                }
+                                if (!merged.bash_command && parsed.bash_command) {
+                                    merged.bash_command = parsed.bash_command;
+                                }
+                            } catch (err) {
+                                // Ignore parse errors for individual chunks
+                            }
+                        }
+                        merged.tags = Array.from(tagsSet).join(', ');
+                        outputToWrite = JSON.stringify(merged, null, 2);
+                    }
+                    const outputFile = path.join(userPaths.ORGANIZED_FOLDER, fileName + '.json');
+                    await fs.writeFile(outputFile, outputToWrite, 'utf-8');
+                    await fs.rename(sourceFile, targetFile);
+                    console.log(`[PIPELINE] Processed file: ${fileName} for user: ${userId}`);
+                }
+            } catch (fileError) {
+                console.error(`[PIPELINE] Error processing file ${fileName} for user ${userId}:`, fileError);
+            }
+        }
+        console.log(`[PIPELINE] Pipeline completed for user: ${userId}`);
+        return;
     } catch (error) {
         console.error(`[PIPELINE] Error running pipeline for user ${userId}:`, error);
         throw error;
@@ -274,7 +620,7 @@ class MultiUserPipelineManager {
                 console.log(`[PROCESS] No files to process for user: ${userId}`);
                 return;
             }
-            await runPipeline(userId);
+            await runPipelineAndExtract(userId);
             this.userLastProcessed.set(userId, Date.now());
             console.log(`[PROCESS] Finished processing for user: ${userId}`);
         } catch (error) {

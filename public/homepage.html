@@ -4,44 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI File Organiser</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="homepage.css" />
-
-  <!-- Script -->
   <script defer src="homepage.js"></script>
 </head>
-<body class="bg-black text-white">
-
-  <!-- Navbar -->
-  <nav id="navbar" class="flex justify-between items-center px-8 py-4 fixed w-full top-0 bg-black transition duration-300 z-50">
-    <div class="text-2xl font-bold bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
-      AI File Organiser
-    </div>
-    <ul class="flex space-x-6">
-      <li><a href="contact_us.html" class="hover:text-pink-400 transition">Contact Us</a></li>
-      <li><a href="features.html" class="hover:text-pink-400 transition">Features</a></li>
-      <li><a href="signin_signup.html#signin-section" class="hover:text-pink-400 transition">Sign In</a></li>
-      <li><a href="signin_signup.html#signup-section" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-2 rounded-full font-semibold hover:opacity-80 transition">Sign Up</a></li>
+<body>
+  <nav id="navbar" class="navbar">
+    <div class="navbar-brand text-2xl font-bold animate-gradient">AI File Organiser</div>
+    <ul class="navbar-menu">
+      <li class="navbar-item"><a href="contact_us.html">Contact Us</a></li>
+      <li class="navbar-item"><a href="features.html">Features</a></li>
+      <li class="navbar-item"><a href="signin.html">Sign In</a></li>
+      <li class="navbar-item"><a href="signup.html" class="btn">Sign Up</a></li>
     </ul>
   </nav>
-
-  <!-- Hero Section -->
-  <section class="flex flex-col items-center justify-center text-center h-screen px-4">
-    <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
-      Organise Your Files Smarter.
-    </h1>
-    <p class="mt-4 text-lg md:text-xl max-w-xl">
-      AI File Organiser declutters, categorises, and streamlines your digital workspace instantly.
-    </p>
-    <div class="mt-8 flex space-x-4">
-      <a href="#" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-3 rounded-full font-semibold hover:opacity-80 transition">Get Started</a>
-      <a href="#" class="border-2 border-pink-500 px-6 py-3 rounded-full font-semibold hover:bg-pink-500 transition">Learn More</a>
+  <section class="container" style="margin-top: 7rem;">
+    <h1 class="dashboard-title">Organise Your Files Smarter.</h1>
+    <p class="mt-4">AI File Organiser declutters, categorises, and streamlines your digital workspace instantly.</p>
+    <div style="margin-top: 2rem;">
+      <a href="#" class="btn">Get Started</a>
+      <a href="#" class="btn" style="background:transparent;border:2px solid #bdbdbd;color:#bdbdbd;">Learn More</a>
     </div>
   </section>
-
 </body>
 </html>

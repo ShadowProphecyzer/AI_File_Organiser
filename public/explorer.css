@@ -1,88 +1,142 @@
-/* explorer.css */
-
-@keyframes rainbowGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: rainbowGradient 5s linear infinite;
-}
-
 body {
-  background: #fff;
-  color: #000;
+  background: #101010;
+  color: #b6ffb0;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  margin: 0;
+}
+
+.navbar {
+  background: #181818;
+  box-shadow: 0 2px 16px 0 #0f0f0f;
+  border-bottom: 1px solid #1f1f1f;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 3vw;
+}
+
+.navbar-brand {
+  color: #39e600;
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 0 0 4px #39e600, 0 0 8px #1e7a2e;
+}
+
+.navbar-menu {
+  list-style: none;
+  display: flex;
+  gap: 2.2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-item a {
+  color: #39e600;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  border-radius: 7px;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: none;
+  font-size: 1.08rem;
+}
+
+.navbar-item a.btn {
+  background: #39e600;
+  color: #101010;
+  font-weight: bold;
+  box-shadow: 0 0 8px #39e60044;
+  border: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.navbar-item a.btn.active, .navbar-item a.btn:focus {
+  background: #39e600;
+  color: #101010;
+  box-shadow: 0 0 16px #39e60099;
+}
+
+.navbar-item a.btn:hover, .navbar-item a.btn:focus {
+  background: #1e7a2e;
+  color: #b6ffb0;
+  box-shadow: 0 0 12px #39e600;
+}
+
+.navbar-item a:hover, .navbar-item a:focus {
+  background: #1e7a2e33;
+  color: #b6ffb0;
+  box-shadow: 0 0 6px #39e60033;
 }
 
 .explorer-container {
-  background-color: #f9fafb;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-  border: 1.5px solid #e5e7eb;
-  max-width: 48rem;
-  margin: 4rem auto 0 auto;
+  max-width: 800px;
+  margin: 7rem auto 0 auto;
+  background: #181818;
+  border-radius: 16px;
+  box-shadow: 0 0 32px #1e7a2e44;
+  padding: 2.5rem 2rem;
 }
 
 .explorer-title {
-  font-size: 2rem;
-  font-weight: 700;
-  background: linear-gradient(90deg, #f87171, #fde68a, #f472b6);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  animation: rainbowGradient 5s linear infinite;
-  text-align: center;
+  color: #39ff14;
+  font-size: 2.2rem;
+  text-shadow: 0 0 12px #39ff14;
+  margin-bottom: 1.5rem;
 }
 
 #search-bar {
-  background: #f3f4f6;
-  color: #111;
-  border: 1.5px solid #e5e7eb;
-  outline: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #39ff14;
+  background: #101010;
+  color: #b6ffb0;
+  margin-bottom: 1.5rem;
   font-size: 1rem;
+  box-shadow: 0 0 8px #39ff1422;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+#search-bar:focus {
+  outline: none;
+  border: 2px solid #39ff14;
+  box-shadow: 0 0 12px #39ff14;
+}
+
+.folder-item, .file-item {
+  background: #181818;
+  color: #b6ffb0;
+  border: 1px solid #1e7a2e;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  margin-bottom: 0.7rem;
+  box-shadow: 0 0 8px #1e7a2e44;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.folder-item:hover, .file-item:hover {
+  background: #1e7a2e;
+  color: #39ff14;
+  box-shadow: 0 0 16px #39ff14;
 }
 
 .explorer-list {
-  background: #e5e7eb;
-  border-radius: 0.5rem;
-  min-height: 200px;
-  padding: 1rem;
-  color: #111;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  border: 1.5px solid #d1d5db;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-top: 1.5rem;
 }
 
-.file-item, .folder-item {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  transition: background 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+::selection {
+  background: #39ff14;
+  color: #101010;
 }
-.file-item:hover, .folder-item:hover {
-  background: #fde68a33;
-  box-shadow: 0 2px 8px rgba(252, 211, 77, 0.12);
+
+::-webkit-scrollbar {
+  width: 10px;
+  background: #181818;
 }
-.file-icon {
-  margin-right: 0.75rem;
-  font-size: 1.2rem;
+::-webkit-scrollbar-thumb {
+  background: #39ff14;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #39ff14;
 }
-.folder-icon {
-  margin-right: 0.75rem;
-  font-size: 1.2rem;
+::-webkit-scrollbar-thumb:hover {
+  background: #1e7a2e;
 }

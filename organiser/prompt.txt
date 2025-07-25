@@ -20,7 +20,7 @@ Your output must be a single pretty-printed JSON object containing these fields 
      `documents/markdown/document.md`
 
 5. bash_command  
-   - Generate a bash command using relative paths that moves the input file to the suggested_file_path, preserving the exact original file name and extension.  
+   - Generate a bash command that always starts with 'cd users/<userId>/organized' and performs all file operations (mv, rm, etc.) from inside this directory, using relative paths.  
    - The command must obey the following constraints based on the context JSON rules:  
      * Allowed commands: `mkdir`, `cd`, `rm`, `mv`  
      * You may combine multiple commands with `&&` in a single line.  
@@ -31,5 +31,18 @@ General Requirements:
 - The output must be valid JSON and pretty-printed for readability.  
 - Always follow and integrate all relevant instructions from the prompt.txt file and the context JSON files, including bash command rules.  
 - Never rename or alter the original input file's name or extension in any output or command.
+- Do not give more than one set of output. If you get chucnks of data combine the relevant outputs and the provide as only one set of json output.
+- Make sure there is no data except for the set tags
+
+Example for reference on hwo output shoudl look:
+[
+  {
+    "file_name": "energy-cycles-in-reactions-xZCt2x3jy2kQj9BY.pdf",
+    "description": "Comprehensive review of energy cycles in chemical reactions, including Hess's Law, bond enthalpy, and Born-Haber cycles with exam questions.",
+    "tags": "chemistry, energy, cycles, reactions, enthalpy, hess, bond, bornhaber, calculations, exothermic, endothermic, combustion, formation, enthalpychange, conversion, hydrogencyanide, ammonia, propanol, methane, ammonia, titanium, carbon, nitrogen, monoxide, dioxide, sodium, magnesium, chloride, fluoride, conversion, ethene, hydration, hessslaw, reactioncycle, bondenthalpy, hydrogen, carbonyl, oxygen, iodide, structure, empirical, analysis, conversion, displacement",
+    "suggested_file_path": "educational_materials/chemistry/energy-cycles-in-reactions-xZCt2x3jy2kQj9BY.pdf",
+    "bash_command": "mkdir -p educational_materials/chemistry && mv energy-cycles-in-reactions-xZCt2x3jy2kQj9BY.pdf educational_materials/chemistry/"
+  }
+]
 
 End of instructions.

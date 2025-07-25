@@ -4,48 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - AI File Organiser</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="dashboard.css" />
-
-  <!-- Script -->
   <script defer src="dashboard.js"></script>
 </head>
-<body class="bg-white text-black min-h-screen">
-
-  <!-- Navbar -->
-  <nav id="navbar" class="flex justify-between items-center px-8 py-4 fixed w-full top-0 bg-black transition duration-300 z-50">
-    <div class="text-2xl font-bold bg-gradient-to-r from-red-400 via-yellow-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
-      AI File Organiser
-    </div>
-    <div class="flex-1 flex justify-center">
-      <ul class="flex space-x-6">
-        <li><a href="contact_us.html" class="hover:text-pink-400 transition">Contact Us</a></li>
-        <li><a href="explorer.html" class="hover:text-pink-400 transition">Explorer</a></li>
-      </ul>
-    </div>
-    <div class="flex items-center space-x-4">
-      <input id="dashboard-search-bar" type="text" placeholder="Search..." class="px-4 py-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-pink-400" />
-      <a href="signin_signup.html#signin-section" class="bg-gradient-to-r from-pink-500 to-yellow-500 px-6 py-2 rounded-full font-semibold hover:opacity-80 transition ml-2">Sign Out</a>
-    </div>
+<body>
+  <nav id="navbar" class="navbar">
+    <div class="navbar-brand text-2xl font-bold animate-gradient">AI File Organiser</div>
+    <ul class="navbar-menu">
+      <li class="navbar-item"><a href="contact_us.html">Contact Us</a></li>
+      <li class="navbar-item"><a href="explorer.html">Explorer</a></li>
+      <li class="navbar-item"><a href="features.html">Features</a></li>
+      <li class="navbar-item"><a href="signin.html" class="btn">Sign In</a></li>
+      <li class="navbar-item"><a href="signup.html" class="btn">Sign Up</a></li>
+    </ul>
   </nav>
-
-  <div class="dashboard-container mt-32">
-    <h1 class="dashboard-title animate-gradient">Welcome to Your Dashboard</h1>
+  <div class="dashboard-container container">
+    <h1 class="dashboard-title">Welcome to Your Dashboard</h1>
     <div class="upload-area">
       <label for="file-upload" class="upload-label">Upload a file to your input folder</label>
       <input type="file" id="file-upload" class="upload-input" multiple accept=".txt,.csv,.tsv,.json,.xml,.yaml,.yml,.ini,.log,.md,.pdf,.docx" />
-      <span id="selected-file-name" class="block text-gray-300 mb-2"></span>
-      <button class="upload-btn" id="upload-btn">Choose from computer</button>
+      <span id="selected-file-name"></span>
+      <button class="upload-btn btn" id="upload-btn">Choose from computer</button>
       <div class="progress-bar-bg" id="progress-bar-bg" style="display:none;">
         <div class="progress-bar" id="progress-bar" style="width:0%"></div>
       </div>
-      <div id="upload-status" class="mt-2 text-sm"></div>
+      <div id="upload-status"></div>
     </div>
   </div>
-
 </body>
 </html>
