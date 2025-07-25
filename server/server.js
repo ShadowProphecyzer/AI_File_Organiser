@@ -9,6 +9,7 @@ const fs = require('fs');
 const session = require('express-session');
 const multer = require('multer');
 const { execSync, spawn } = require('child_process');
+require('dotenv').config();
 
 const MultiUserPipelineManager = require('../organiser/multi-user-pipeline');
 
@@ -27,7 +28,8 @@ pipelineManager.initialize().then(() => {
 });
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/aifileorganiser', {
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/aifileorganiser';
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
